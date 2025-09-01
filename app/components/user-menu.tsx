@@ -1,0 +1,104 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { signOut, useSession } from "next-auth/react";
+import Link from "next/link";
+import Image from "next/image";
+import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+
+export default function UserMenu() {
+  const { data: session } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  if (!session) {
+    return (
+      <div className="flex items-center space-x-4">
+        <Link
+          href="/auth/prisijungti"
+          className="border border-[#101827] text-[#101827] font-bold italic text-base rounded-lg px-6 py-3 hover:bg-[#EFEFEF] hover:text-[#101827] transition"
+        >
+          Prisijungti
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-2 focus:outline-none"
+      >
+        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#60988E]">
+          {session.user.image ? (
+            <Image
+              src={session.user.image || "/placeholder.svg"}
+              alt={session.user.name || "User"}
+              width={40}
+              height={40}
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-[#60988E] flex items-center justify-center text-white">
+              {session.user.name ? (
+                session.user.name[0].toUpperCase()
+              ) : (
+                <User size={20} />
+              )}
+            </div>
+          )}
+        </div>
+        <span className="hidden md:block font-medium">{session.user.name}</span>
+        <ChevronDown size={16} className="text-gray-600" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
+          <div className="px-4 py-2 border-b border-gray-100">
+            <p className="text-sm font-medium">{session.user.name}</p>
+            <p className="text-xs text-gray-500 truncate">
+              {session.user.email}
+            </p>
+          </div>
+          <Link
+            href="/profilis"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <User size={16} className="mr-2" />
+            Mano profilis
+          </Link>
+          <Link
+            href="/nustatymai"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <Settings size={16} className="mr-2" />
+            Nustatymai
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+          >
+            <LogOut size={16} className="mr-2" />
+            Atsijungti
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

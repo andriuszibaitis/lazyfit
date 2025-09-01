@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  provider       String?   @default("credentials")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  role           String    @default("user")
+
+  membershipStatus String?   @default("inactive") 
+  planId           String?
+  membershipExpiry DateTime?
+  membership       Membership? @relation(fields: [planId], references: [planId], onDelete: SetNull)
+
+  accounts Account[]
+  sessions Session[]
+
+  foodProducts FoodProduct[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  htmlContent String    @db.Text
+  textContent String?   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+}
+
+model Membership {
+  id                String   @id @default(cuid())
+  name              String
+  planId            String   @unique
+  price             Decimal  @db.Decimal(10, 2)
+  discountPercentage Int      @default(0)
+  duration          Int      
+  description       String?  @db.Text
+  features          Json?    
+  isActive          Boolean  @default(true)
+  showOnHomepage    Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  users             User[]
+  recipes           RecipeMembership[]
+  nutritionPlans    NutritionPlan[]
+  trainingPrograms  TrainingProgram[]
+  workouts          Workout[]
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  title       String
+  path        String
+  icon        String?
+  section     String      @default("main")
+  order       Int
+  isActive    Boolean     @default(true)
+  parentId    String?
+  parent      MenuItem?   @relation("MenuItemToMenuItem", fields: [parentId], references: [id], onDelete: SetNull)
+  children    MenuItem[]  @relation("MenuItemToMenuItem")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Page {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  content     String      @db.Text
+  isPublished Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String?
+  updatedBy   String?
+}
+
+model FoodProduct {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  sugar       Float?
+  serving     Float
+  servingUnit String   @default("g")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String?  
+  isUserCreated Boolean @default(false) 
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  recipeIngredients RecipeIngredient[]
+}
+
+model RecipeCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  image       String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recipes     Recipe[]
+}
+
+model Recipe {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?  @db.Text
+  preparationTime Int?     
+  cookingTime     Int?     
+  servings        Int      @default(1)
+  difficulty      String?  @default("medium") 
+  instructions    Json     
+  image           String?
+  tags            Json?    
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+  availableToAll  Boolean  @default(true) 
+
+  categoryId      String?
+  category        RecipeCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  totalCalories   Float?
+  totalProtein    Float?
+  totalCarbs      Float?
+  totalFat        Float?
+  totalFiber      Float?
+  totalSugar      Float?
+
+  ingredients     RecipeIngredient[]
+  memberships     RecipeMembership[]
+}
+
+model RecipeIngredient {
+  id            String       @id @default(cuid())
+  recipeId      String
+  foodProductId String
+  quantity      Float
+  unit          String       @default("g")
+  url           String?      
+
+  recipe        Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  foodProduct   FoodProduct  @relation(fields: [foodProductId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, foodProductId])
+}
+
+model RecipeMembership {
+  id           String     @id @default(cuid())
+  recipeId     String
+  membershipId String
+
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, membershipId])
+}
+
+model NutritionPlan {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  gender      String   @default("all") 
+  membershipId String? 
+  membership  Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  imageUrl    String?
+  videoUrl    String?
+  isPublished Boolean  @default(false)
+  days        NutritionPlanDay[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+}
+
+model NutritionPlanDay {
+  id              String   @id @default(cuid())
+  dayNumber       Int
+  nutritionPlanId String
+  nutritionPlan   NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+  meals           NutritionPlanMeal[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model NutritionPlanMeal {
+  id          String   @id @default(cuid())
+  mealNumber  Int
+  name        String
+  dayId       String
+  day         NutritionPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  items       NutritionPlanMealItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model NutritionPlanMealItem {
+  id              String   @id @default(cuid())
+  foodProductId   String
+  foodProductName String
+  quantity        Float    
+  calories        Float
+  protein         Float
+  carbs           Float
+  fat             Float
+  mealId          String
+  meal            NutritionPlanMeal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TrainingProgram {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?  @db.Text
+  difficulty   String   @default("medium") 
+  duration     Int?     
+  gender       String   @default("all") 
+  goal         String?  
+  imageUrl     String?
+  videoUrl     String?
+  isPublished  Boolean  @default(false)
+  membershipId String?
+  membership   Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  programWorkouts ProgramWorkout[]
+  programPeriods  ProgramPeriod[] 
+}
+
+model ProgramPeriod {
+  id            String    @id @default(cuid())
+  programId     String
+  name          String
+  description   String?
+  startWeek     Int       @default(1)  
+  endWeek       Int       @default(4)  
+  order         Int
+  program       TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  workouts      ProgramWorkout[]
+  weeks         PeriodWeek[]    
+}
+
+model Workout {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?  @db.Text
+  duration          Int?     
+  difficulty        String   @default("medium") 
+  targetMuscleGroups Json?    
+  equipment         Json?    
+  imageUrl          String?
+  videoUrl          String?
+  isPublished       Boolean  @default(false)
+  membershipId      String?
+  membership        Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+  updatedBy         String?
+  isCopy            Boolean  @default(false)  
+  originalWorkoutId String?  
+
+  programWorkouts   ProgramWorkout[]
+  workoutExercises  WorkoutExercise[]
+  originalWorkout   Workout?  @relation("WorkoutCopies", fields: [originalWorkoutId], references: [id], onDelete: SetNull)
+  copies            Workout[] @relation("WorkoutCopies")
+}
+
+model PeriodWeek {
+  id            String    @id @default(cuid())
+  periodId      String
+  weekNumber    Int
+  isCompleted   Boolean   @default(false)
+  period        ProgramPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  workouts      ProgramWorkout[]
+
+  @@unique([periodId, weekNumber])
+}
+
+model ProgramWorkout {
+  id              String   @id @default(cuid())
+  programId       String
+  workoutId       String
+  periodId        String?
+  weekId          String?  
+  weekNumber      Int      @default(1) 
+  dayNumber       Int      
+  order           Int      @default(0) 
+
+  program         TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  workout         Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  period          ProgramPeriod?  @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  week            PeriodWeek?     @relation(fields: [weekId], references: [id], onDelete: SetNull)
+
+  @@unique([programId, workoutId, weekNumber, dayNumber])
+}
+
+model Exercise {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?  @db.Text
+  muscleGroup     String?  
+  secondaryMuscleGroups Json?    
+  equipment       String?  
+  difficulty      String   @default("medium") 
+  instructions    Json?    
+  tips            Json?    
+  imageUrl        String?
+  videoUrl        String?
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  workoutExercises WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id              String   @id @default(cuid())
+  workoutId       String
+  exerciseId      String
+  order           Int      @default(0)
+  sets            Int?
+  reps            String?  
+  restTime        Int?     
+  tempo           String?  
+  supersetGroup   String?  
+  supersetOrder   Int?     
+  notes           String?  @db.Text
+
+  workout         Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise        Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, exerciseId, supersetGroup, supersetOrder])
+}
