@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function NutritionPlansPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -20,7 +20,8 @@ export default async function NutritionPlansPage({
     redirect("/auth/prisijungti");
   }
 
-  const query = searchParams.q || "";
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams.q || "";
 
   return <NutritionPlansPageClient query={query} />;
 }

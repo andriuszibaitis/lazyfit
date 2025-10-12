@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const id = params.id;
+    const { id } = await params;
 
     const product = await prisma.foodProduct.findUnique({
       where: {
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,7 +45,7 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const id = params.id;
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
@@ -109,7 +109,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -118,7 +118,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const id = params.id;
+    const { id } = await params;
 
     const existingProduct = await prisma.foodProduct.findUnique({
       where: {

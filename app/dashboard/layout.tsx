@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../lib/auth-options";
 import { redirect } from "next/navigation";
 import SideNavigation from "./components/side-navigation";
+import DashboardHeader from "./components/dashboard-header";
+import { PageTitleProvider } from "./contexts/page-title-context";
+import DashboardWrapper from "./components/dashboard-wrapper";
 
 export default async function DashboardLayout({
   children,
@@ -16,10 +19,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f7f7f7]">
-      <SideNavigation user={session.user} />
+    <PageTitleProvider>
+      <div className="flex min-h-screen bg-[#f7f7f7]">
+        <SideNavigation user={session.user} />
 
-      <div className="flex-1 flex flex-col">{children}</div>
-    </div>
+        <div className="flex-1 flex flex-col">
+          <DashboardWrapper />
+          <main className="flex-1">{children}</main>
+        </div>
+      </div>
+    </PageTitleProvider>
   );
 }

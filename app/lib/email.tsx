@@ -243,3 +243,67 @@ export async function sendEmail(
     throw error;
   }
 }
+
+export async function sendDeleteVerificationCode(email: string, code: string) {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'LazyFit - Paskyros trynimo patvirtinimas',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Paskyros trynimo patvirtinimas</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #60988E;">LazyFit - Paskyros trynimo patvirtinimas</h2>
+
+            <p>Sveiki,</p>
+
+            <p>Gavome prašymą ištrinti jūsų LazyFit paskyrą. Jei tai tikrai jūs, naudokite žemiau pateiktą patvirtinimo kodą:</p>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
+              <h3 style="margin: 0; font-size: 24px; color: #60988E; letter-spacing: 2px;">${code}</h3>
+            </div>
+
+            <p><strong>Svarbu:</strong> Šis kodas galioja 15 minučių.</p>
+
+            <p>Jei tai ne jūs prašėte ištrinti paskyrą, ignoruokite šį laišką. Jūsų paskyra liks saugi.</p>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+            <p style="color: #666; font-size: 14px;">
+              Su pagarba,<br>
+              LazyFit komanda
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      LazyFit - Paskyros trynimo patvirtinimas
+
+      Sveiki,
+
+      Gavome prašymą ištrinti jūsų LazyFit paskyrą. Jei tai tikrai jūs, naudokite patvirtinimo kodą: ${code}
+
+      Šis kodas galioja 15 minučių.
+
+      Jei tai ne jūs prašėte ištrinti paskyrą, ignoruokite šį laišką.
+
+      Su pagarba,
+      LazyFit komanda
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Verification code sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
+}

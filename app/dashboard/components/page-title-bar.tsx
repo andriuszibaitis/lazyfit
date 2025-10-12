@@ -1,24 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getCache, setCache } from "@/app/lib/cache-utils";
 import { useRouter } from "next/navigation";
+import Tabs, { TabItem } from "../../components/tabs";
+import { usePageTitle } from "../contexts/page-title-context";
 
 interface PageTitleBarProps {
   title?: string;
   workoutId?: string;
   workoutTitle?: string;
+  tabs?: TabItem[];
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
 }
 
 export default function PageTitleBar({
   title,
   workoutId,
   workoutTitle,
+  tabs,
+  activeTab,
+  onTabChange,
 }: PageTitleBarProps) {
   const [pageTitle, setPageTitle] = useState<string>(title || "Treniruotės");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
+  const { setPageTitle: setHeaderTitle } = usePageTitle();
 
   useEffect(() => {
     const fetchWorkoutTitle = async () => {
@@ -30,6 +39,7 @@ export default function PageTitleBar({
 
         if (workoutTitle) {
           setPageTitle(workoutTitle);
+          setHeaderTitle(workoutTitle);
           setCache(cacheKey, workoutTitle);
           setIsLoading(false);
           return;
@@ -38,6 +48,7 @@ export default function PageTitleBar({
         if (cachedTitle) {
           console.log("Naudojamas cache treniruotės pavadinimui:", workoutId);
           setPageTitle(cachedTitle);
+          setHeaderTitle(cachedTitle);
         }
 
         try {
@@ -51,6 +62,7 @@ export default function PageTitleBar({
               if (!cachedTitle || data.name !== cachedTitle) {
                 console.log("Atnaujinamas treniruotės pavadinimas:", data.name);
                 setPageTitle(data.name);
+                setHeaderTitle(data.name);
 
                 setCache(cacheKey, data.name);
               }
@@ -63,6 +75,7 @@ export default function PageTitleBar({
         }
       } else if (title) {
         setPageTitle(title);
+        setHeaderTitle(title);
       }
     };
 
@@ -74,37 +87,40 @@ export default function PageTitleBar({
   };
 
   return (
-    <div className="border-b">
-      <div className="flex items-center px-6 p-5 mx-auto">
-        <div className="flex items-center">
-          {workoutId ? (
-            <>
-              <button
-                onClick={handleGoBack}
-                className="mr-4 flex items-center justify-center border border-gray-200 bg-gray-50 rounded-md w-12 h-12 transition-colors hover:bg-gray-100"
-                aria-label="Grįžti atgal"
-              >
-                <ChevronLeft className="h-6 w-6 text-gray-600" />
-              </button>
-              <span className="font-[mango] text-[40px]">
-                {isLoading && !pageTitle ? "Kraunama..." : pageTitle}
-              </span>
-            </>
-          ) : (
-            <span className="text-[50px] font-[mango]">{pageTitle}</span>
-          )}
+    <div>
+      {/* Back button only for workout pages */}
+      {workoutId && (
+        <div className="flex items-center px-6 py-3">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center justify-center border border-gray-200 bg-gray-50 rounded-md w-12 h-12 transition-colors hover:bg-gray-100"
+            aria-label="Grįžti atgal"
+          >
+            <ChevronLeft className="h-6 w-6 text-gray-600" />
+          </button>
         </div>
-        <div className="ml-auto">
-          <div className="relative">
-            <input
-              type="search"
-              placeholder="Paieška"
-              className="pl-8 pr-4 py-1 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-            <Search className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
+      )}
+
+      {/* Tabs Section */}
+      {tabs && tabs.length > 0 && (
+        <div className="px-6">
+          <div className="flex">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange?.(tab.id)}
+                className={`px-6 py-3 text-base font-medium transition-all duration-200 border-b-2 ${
+                  activeTab === tab.id || (!activeTab && tab.id === tabs[0]?.id)
+                    ? "text-black border-black"
+                    : "text-gray-400 border-transparent hover:text-gray-600"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

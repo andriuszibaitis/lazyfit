@@ -5,7 +5,7 @@ import { authOptions } from "@/app/lib/auth-options";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const exercise = await prisma.exercise.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         workoutExercises: {
           include: {
@@ -44,7 +44,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -69,7 +69,7 @@ export async function PUT(
     } = body;
 
     const exercise = await prisma.exercise.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         name,
         description,
@@ -98,7 +98,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -108,11 +108,11 @@ export async function DELETE(
     }
 
     await prisma.workoutExercise.deleteMany({
-      where: { exerciseId: params.id },
+      where: { exerciseId: (await params).id },
     });
 
     await prisma.exercise.delete({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     return NextResponse.json({ success: true });

@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,8 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const menuItemId = params.id;
+    const { id } = await params;
+    const menuItemId = id;
 
     const menuItem = await prisma.menuItem.findUnique({
       where: {
@@ -38,7 +39,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,7 +48,8 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const menuItemId = params.id;
+    const { id } = await params;
+    const menuItemId = id;
     const body = await request.json();
     const { title, path, icon, section, order, parentId, isActive } = body;
 
@@ -93,7 +95,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -102,7 +104,8 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const menuItemId = params.id;
+    const { id } = await params;
+    const menuItemId = id;
 
     const existingMenuItem = await prisma.menuItem.findUnique({
       where: {

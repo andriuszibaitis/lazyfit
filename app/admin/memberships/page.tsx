@@ -29,6 +29,7 @@ async function getMemberships() {
 
         return {
           ...membership,
+          price: Number(membership.price), // Convert Decimal to number
           _count: {
             users: userCount,
           },

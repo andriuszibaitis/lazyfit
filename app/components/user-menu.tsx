@@ -6,6 +6,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { User, LogOut, Settings, ChevronDown } from "lucide-react";
 
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "VR";
+  const words = name.trim().split(" ");
+  if (words.length === 1) {
+    return words[0].substring(0, 2).toUpperCase();
+  }
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
 export default function UserMenu() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -53,12 +62,8 @@ export default function UserMenu() {
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-[#60988E] flex items-center justify-center text-white">
-              {session.user.name ? (
-                session.user.name[0].toUpperCase()
-              ) : (
-                <User size={20} />
-              )}
+            <div className="w-full h-full bg-[#60988E] flex items-center justify-center text-white font-semibold text-sm">
+              {getInitials(session.user.name)}
             </div>
           )}
         </div>

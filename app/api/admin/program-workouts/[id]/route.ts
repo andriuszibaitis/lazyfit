@@ -5,7 +5,7 @@ import { authOptions } from "@/app/lib/auth-options";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,8 +17,9 @@ export async function PUT(
     const body = await request.json();
     const { weekNumber, dayNumber, order } = body;
 
+    const { id } = await params;
     const programWorkout = await prisma.programWorkout.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         weekNumber: weekNumber ? Number.parseInt(weekNumber) : undefined,
         dayNumber: dayNumber ? Number.parseInt(dayNumber) : undefined,
@@ -38,7 +39,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,8 +48,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const programWorkout = await prisma.programWorkout.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         workout: true,
       },
@@ -62,7 +64,7 @@ export async function DELETE(
     }
 
     await prisma.programWorkout.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (programWorkout.workout.name.includes("Kopija savaitės")) {

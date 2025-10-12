@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const category = await prisma.recipeCategory.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         recipes: true,
       },
@@ -40,7 +41,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -59,8 +60,9 @@ export async function PUT(
           .replace(/\s+/g, "-")
       : undefined;
 
+    const { id } = await params;
     const category = await prisma.recipeCategory.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         slug,
@@ -83,7 +85,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -92,8 +94,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const categoryWithRecipes = await prisma.recipeCategory.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: { recipes: true },
@@ -115,7 +118,7 @@ export async function DELETE(
     }
 
     await prisma.recipeCategory.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,8 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const templateId = params.id;
+    const { id } = await params;
+    const templateId = id;
 
     const template = await prisma.emailTemplate.findUnique({
       where: {
@@ -40,7 +41,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -49,7 +50,8 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const templateId = params.id;
+    const { id } = await params;
+    const templateId = id;
     const body = await request.json();
     const { subject, htmlContent, textContent, isActive } = body;
 

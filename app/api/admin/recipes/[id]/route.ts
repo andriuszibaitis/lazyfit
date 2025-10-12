@@ -6,7 +6,7 @@ import { calculateNutrition } from "@/app/lib/nutrition";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,8 +15,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const recipe = await prisma.recipe.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         ingredients: {
           include: {
@@ -44,7 +45,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -74,16 +75,17 @@ export async function PUT(
     const nutrition = await calculateNutrition(ingredients);
 
     const recipe = await prisma.$transaction(async (tx) => {
+      const { id } = await params;
       await tx.recipeIngredient.deleteMany({
-        where: { recipeId: params.id },
+        where: { recipeId: id },
       });
 
       await tx.recipeMembership.deleteMany({
-        where: { recipeId: params.id },
+        where: { recipeId: id },
       });
 
       const updatedRecipe = await tx.recipe.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           title,
           description,

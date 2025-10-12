@@ -156,10 +156,11 @@ function addThumbnailUrls(workout: any) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log("Fetching workout with ID:", params.id);
+    const { id } = await params;
+    console.log("Fetching workout with ID:", id);
 
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -174,7 +175,7 @@ export async function GET(
     });
 
     const workout = await prisma.workout.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         membership: {
           select: {
