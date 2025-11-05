@@ -34,7 +34,6 @@ function authenticateBunnyThumbnail(videoUrl: string | null): string {
     }
 
     if (!videoId) {
-      console.log("Could not extract video ID from:", videoUrl);
       return "/placeholder.svg?height=300&width=400";
     }
 
@@ -50,10 +49,8 @@ function authenticateBunnyThumbnail(videoUrl: string | null): string {
 
     const thumbnailUrl = `https://${cdnDomain}/bcdn_token=${token}&expires=${expirationTime}&token_path=%2F${videoId}%2F/${videoId}/thumbnail_${randomSuffix}.jpg`;
 
-    console.log(`Generated thumbnail URL for video ${videoId}`);
     return thumbnailUrl;
   } catch (error) {
-    console.error("Error authenticating Bunny thumbnail:", error);
     return "/placeholder.svg?height=300&width=400";
   }
 }
@@ -72,13 +69,6 @@ export default async function DashboardPage() {
 
   const userMembershipId = user?.membership?.id || null;
 
-  console.log("User membership info:", {
-    userId: user?.id,
-    planId: user?.planId,
-    membershipId: userMembershipId,
-    membershipStatus: user?.membershipStatus,
-    membershipName: user?.membership?.name,
-  });
 
   const workouts = await prisma.workout.findMany({
     where: {
@@ -101,31 +91,8 @@ export default async function DashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  console.log("Fetched workouts:", {
-    totalCount: workouts.length,
-    workoutsWithNullMembership: workouts.filter((w) => w.membershipId === null)
-      .length,
-    workoutsWithEmptyMembership: workouts.filter((w) => w.membershipId === "")
-      .length,
-    workoutsWithUserMembership: workouts.filter(
-      (w) => w.membershipId === userMembershipId
-    ).length,
-    workoutMemberships: workouts.map((w) => ({
-      id: w.id,
-      name: w.name,
-      membershipId: w.membershipId,
-    })),
-  });
 
   const trainings = workouts.map((workout) => {
-    if (workout.videoUrl) {
-      console.log(
-        `Processing video URL for workout ${
-          workout.id
-        }: ${workout.videoUrl.substring(0, 50)}...`
-      );
-    }
-
     return {
       id: workout.id,
       title: workout.name,
@@ -144,30 +111,6 @@ export default async function DashboardPage() {
 
       <div className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h3 className="font-semibold mb-2">Debug informacija:</h3>
-            <p>
-              Vartotojo narystė: {user?.membership?.name || "Nėra"} (ID:{" "}
-              {userMembershipId || "Nėra"})
-            </p>
-            <p>Rasta treniruočių: {workouts.length}</p>
-            <p>
-              Treniruotės be narystės (visiems):{" "}
-              {
-                workouts.filter(
-                  (w) => w.membershipId === null || w.membershipId === ""
-                ).length
-              }
-            </p>
-            <p>
-              Treniruotės su vartotojo naryste:{" "}
-              {
-                workouts.filter((w) => w.membershipId === userMembershipId)
-                  .length
-              }
-            </p>
-          </div>
-
           <Tabs defaultValue="treneruotes" className="mb-8">
             <TabsList className="border-b border-[#e6e6e6] w-full justify-start bg-transparent p-0 h-auto">
               <TabsTrigger
