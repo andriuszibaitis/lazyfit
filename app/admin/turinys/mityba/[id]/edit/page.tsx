@@ -13,8 +13,9 @@ export const metadata: Metadata = {
 export default async function EditNutritionPlanPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "admin") {
@@ -23,7 +24,7 @@ export default async function EditNutritionPlanPage({
 
   const nutritionPlan = await prisma.nutritionPlan.findUnique({
     where: {
-      id: params.id,
+      id: id,
     },
     include: {
       membership: true,
@@ -49,10 +50,21 @@ export default async function EditNutritionPlanPage({
     redirect("/admin/turinys/mityba");
   }
 
+  // Convert Decimal to number for client component
+  const serializedData = {
+    ...nutritionPlan,
+    membership: nutritionPlan.membership
+      ? {
+          ...nutritionPlan.membership,
+          price: Number(nutritionPlan.membership.price),
+        }
+      : null,
+  };
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8">Redaguoti mitybos planą</h1>
-      <NutritionPlanForm initialData={nutritionPlan} />
+      <NutritionPlanForm initialData={serializedData} />
     </div>
   );
 }

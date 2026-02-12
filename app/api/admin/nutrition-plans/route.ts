@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
     const {
       name,
       description,
+      benefits,
+      icon,
+      isPopular,
       gender,
       membershipId,
       imageUrl,
@@ -76,6 +79,9 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description,
+        benefits,
+        icon: icon || "swimming",
+        isPopular: isPopular || false,
         gender: gender || "all",
         membershipId: membershipId || null,
         imageUrl,

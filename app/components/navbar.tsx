@@ -55,7 +55,7 @@ export default function Navbar() {
 
   return (
     <nav>
-      <div className="container mx-auto flex justify-between items-center p-4">
+      <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
         {}
         <Link
           href="/"

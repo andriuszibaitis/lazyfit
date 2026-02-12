@@ -142,6 +142,98 @@ body {
 
 @theme inline {
 
+  --font-family-outfit: var(--font-outfit), sans-serif;
+  --font-family-mango: mango, sans-serif;
+  --font-family-dm-sans: var(--font-dm-sans), sans-serif;
+
+  /* Font Sizes - Headers */
+  --font-size-header-xl: 48px;
+  --font-size-header-xl--line-height: 0.9;
+  --font-size-header-xl--font-weight: 600;
+
+  --font-size-header-l: 36px;
+  --font-size-header-l--line-height: 0.9;
+  --font-size-header-l--font-weight: 600;
+
+  --font-size-header-m: 28px;
+  --font-size-header-m--line-height: 0.9;
+  --font-size-header-m--font-weight: 600;
+
+  --font-size-header-card: 18px;
+  --font-size-header-card--line-height: 1.2;
+  --font-size-header-card--font-weight: 500;
+  --font-size-header-card--letter-spacing: -0.36px;
+
+  /* Font Sizes - Text Medium */
+  --font-size-text-medium: 16px;
+  --font-size-text-medium--line-height: 1.3;
+  --font-size-text-medium--font-weight: 400;
+  --font-size-text-medium--letter-spacing: -0.32px;
+
+  --font-size-text-medium-md: 16px;
+  --font-size-text-medium-md--line-height: 1.2;
+  --font-size-text-medium-md--font-weight: 500;
+
+  --font-size-text-medium-sb: 16px;
+  --font-size-text-medium-sb--line-height: 1.2;
+  --font-size-text-medium-sb--font-weight: 600;
+
+  --font-size-text-medium-bold: 16px;
+  --font-size-text-medium-bold--line-height: 1.2;
+  --font-size-text-medium-bold--font-weight: 700;
+
+  /* Font Sizes - Text Small */
+  --font-size-text-small: 14px;
+  --font-size-text-small--line-height: 1.4;
+  --font-size-text-small--font-weight: 400;
+  --font-size-text-small--letter-spacing: -0.28px;
+
+  --font-size-text-small-md: 14px;
+  --font-size-text-small-md--line-height: 1.2;
+  --font-size-text-small-md--font-weight: 500;
+
+  --font-size-text-small-sb: 14px;
+  --font-size-text-small-sb--line-height: 1.2;
+  --font-size-text-small-sb--font-weight: 600;
+
+  --font-size-text-small-bold: 14px;
+  --font-size-text-small-bold--line-height: 1.2;
+  --font-size-text-small-bold--font-weight: 700;
+
+  /* Font Sizes - Text XS */
+  --font-size-text-xs: 13px;
+  --font-size-text-xs--line-height: 1.2;
+  --font-size-text-xs--font-weight: 400;
+
+  --font-size-text-xs-md: 13px;
+  --font-size-text-xs-md--line-height: 1.2;
+  --font-size-text-xs-md--font-weight: 500;
+
+  --font-size-text-xs-sb: 13px;
+  --font-size-text-xs-sb--line-height: 1.2;
+  --font-size-text-xs-sb--font-weight: 600;
+
+  --font-size-text-xs-bold: 13px;
+  --font-size-text-xs-bold--line-height: 1.2;
+  --font-size-text-xs-bold--font-weight: 700;
+
+  /* Font Sizes - Text Tiny */
+  --font-size-text-tiny: 11px;
+  --font-size-text-tiny--line-height: 1.2;
+  --font-size-text-tiny--font-weight: 400;
+
+  --font-size-text-tiny-md: 11px;
+  --font-size-text-tiny-md--line-height: 1.2;
+  --font-size-text-tiny-md--font-weight: 500;
+
+  --font-size-text-tiny-sb: 11px;
+  --font-size-text-tiny-sb--line-height: 1.2;
+  --font-size-text-tiny-sb--font-weight: 600;
+
+  --font-size-text-tiny-bold: 11px;
+  --font-size-text-tiny-bold--line-height: 1.2;
+  --font-size-text-tiny-bold--font-weight: 700;
+
   --radius-sm: calc(var(--radius) - 4px);
 
   --radius-md: calc(var(--radius) - 2px);
@@ -211,6 +303,24 @@ body {
   --color-sidebar-border: var(--sidebar-border);
 
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Design System Colors */
+  --color-brand-green: #60988E;
+  --color-brand-green-dark: #34786C;
+  --color-brand-green-light: #AFCBC7;
+  --color-light-green: #D7E5E3;
+  --color-success: #25A55A;
+  --color-success-light: #C8E8D6;
+  --color-warning: #FFB700;
+  --color-warning-light: #FFE2A5;
+  --color-destructive-light: #FBD0CD;
+  --color-destructive-dark: #BA1E21;
+  --color-dark-blue: #101827;
+  --color-dark-grey: #555B65;
+  --color-grey: #B2B4B9;
+  --color-grey-light: #CCCED3;
+  --color-light-grey: #EFEFEF;
+  --color-system-red: #E74043;
 }
 
 @layer base {
@@ -219,5 +329,165 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Typography Utilities based on Figma Design System */
+@layer utilities {
+  /* Headers - use font-mango */
+  .heading-xl {
+    font-family: mango, sans-serif;
+    font-size: 48px;
+    line-height: 0.9;
+    font-weight: 600;
+  }
+
+  .heading-l {
+    font-family: mango, sans-serif;
+    font-size: 36px;
+    line-height: 0.9;
+    font-weight: 600;
+  }
+
+  .heading-m {
+    font-family: mango, sans-serif;
+    font-size: 28px;
+    line-height: 0.9;
+    font-weight: 600;
+  }
+
+  .heading-card {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: 500;
+    letter-spacing: -0.36px;
+  }
+
+  /* Text Medium - use font-outfit */
+  .text-md-regular {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 400;
+    letter-spacing: -0.32px;
+  }
+
+  .text-md-medium {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .text-md-semibold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .text-md-bold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  /* Text Small - use font-outfit */
+  .text-sm-regular {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: -0.28px;
+  }
+
+  .text-sm-medium {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .text-sm-semibold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .text-sm-bold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  /* Text Extra Small - use font-outfit */
+  .text-xs-regular {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 400;
+  }
+
+  .text-xs-medium {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .text-xs-semibold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .text-xs-bold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  /* Text Tiny - use font-outfit */
+  .text-tiny-regular {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 400;
+  }
+
+  .text-tiny-medium {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .text-tiny-semibold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .text-tiny-bold {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

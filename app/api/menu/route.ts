@@ -4,12 +4,10 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const location = searchParams.get("location") || "main";
+    const section = searchParams.get("section");
 
     const menuItems = await prisma.menuItem.findMany({
-      where: {
-        location,
-      },
+      where: section ? { section } : undefined,
       orderBy: {
         order: "asc",
       },

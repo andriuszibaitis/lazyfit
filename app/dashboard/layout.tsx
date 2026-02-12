@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../lib/auth-options";
 import { redirect } from "next/navigation";
 import SideNavigation from "./components/side-navigation";
-import DashboardHeader from "./components/dashboard-header";
 import { PageTitleProvider } from "./contexts/page-title-context";
+import { MobileMenuProvider } from "./contexts/mobile-menu-context";
 import DashboardWrapper from "./components/dashboard-wrapper";
 
 export default async function DashboardLayout({
@@ -20,14 +20,16 @@ export default async function DashboardLayout({
 
   return (
     <PageTitleProvider>
-      <div className="flex min-h-screen bg-[#f7f7f7]">
-        <SideNavigation user={session.user} />
+      <MobileMenuProvider>
+        <div className="flex min-h-screen bg-[#f7f7f7]">
+          <SideNavigation user={session.user} />
 
-        <div className="flex-1 flex flex-col">
-          <DashboardWrapper />
-          <main className="flex-1">{children}</main>
+          <div className="flex-1 flex flex-col min-w-0">
+            <DashboardWrapper />
+            <main className="flex-1">{children}</main>
+          </div>
         </div>
-      </div>
+      </MobileMenuProvider>
     </PageTitleProvider>
   );
 }

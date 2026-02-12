@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const nutritionPlan = await prisma.nutritionPlan.findUnique({
       where: {
@@ -53,7 +53,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -62,11 +62,14 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
       description,
+      benefits,
+      icon,
+      isPopular,
       gender,
       membershipId,
       imageUrl,
@@ -103,6 +106,9 @@ export async function PATCH(
       data: {
         name,
         description,
+        benefits,
+        icon: icon || "swimming",
+        isPopular: isPopular || false,
         gender: gender || "all",
         membershipId: membershipId || null,
         imageUrl,
@@ -175,7 +181,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -184,7 +190,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const existingPlan = await prisma.nutritionPlan.findUnique({
       where: { id },

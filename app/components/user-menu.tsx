@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { User, LogOut, Settings, ChevronDown, LayoutDashboard, Shield } from "lucide-react";
 
 function getInitials(name: string | null | undefined): string {
   if (!name) return "VR";
@@ -80,12 +80,20 @@ export default function UserMenu() {
             </p>
           </div>
           <Link
-            href="/profilis"
+            href="/dashboard"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <LayoutDashboard size={16} className="mr-2" />
+            Mano apžvalga
+          </Link>
+          <Link
+            href="/dashboard/asmenine-paskyra"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
             onClick={() => setIsOpen(false)}
           >
             <User size={16} className="mr-2" />
-            Mano profilis
+            Asmeninė paskyra
           </Link>
           <Link
             href="/nustatymai"
@@ -95,6 +103,16 @@ export default function UserMenu() {
             <Settings size={16} className="mr-2" />
             Nustatymai
           </Link>
+          {session.user.role === "admin" && (
+            <Link
+              href="/admin"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              onClick={() => setIsOpen(false)}
+            >
+              <Shield size={16} className="mr-2" />
+              Administravimas
+            </Link>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"

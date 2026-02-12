@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { use } from "react";
 import { useEffect, useState } from "react";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -56,7 +56,8 @@ interface Workout {
   membershipId?: string | null;
 }
 
-export default function TrainingPage({ params }: { params: { id: string } }) {
+export default function TrainingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,15 +92,15 @@ export default function TrainingPage({ params }: { params: { id: string } }) {
       });
 
       try {
-        if (!params.id || params.id === "undefined") {
+        if (!id || id === "undefined") {
           throw new Error("Invalid workout ID");
         }
 
-        const cacheKey = `workout_${params.id}`;
+        const cacheKey = `workout_${id}`;
         const cachedWorkout = getCache<Workout>(cacheKey);
 
         if (cachedWorkout) {
-          console.log("Naudojami cache duomenys treniruotei:", params.id);
+          console.log("Naudojami cache duomenys treniruotei:", id);
           setWorkout(cachedWorkout);
 
           initializeStates(cachedWorkout);
@@ -107,8 +108,8 @@ export default function TrainingPage({ params }: { params: { id: string } }) {
           return;
         }
 
-        console.log("Kraunami duomenys iš API treniruotei:", params.id);
-        const res = await fetch(`/api/workouts/${params.id}`);
+        console.log("Kraunami duomenys iš API treniruotei:", id);
+        const res = await fetch(`/api/workouts/${id}`);
         if (!res.ok) {
           console.error("API response not OK:", res.status, res.statusText);
           throw new Error("Failed to fetch workout");
@@ -135,7 +136,7 @@ export default function TrainingPage({ params }: { params: { id: string } }) {
     };
 
     checkAuth();
-  }, [params.id, router]);
+  }, [id, router]);
 
   const initializeStates = (data: Workout) => {
     const exerciseStates: Record<string, boolean> = {};
@@ -352,8 +353,8 @@ export default function TrainingPage({ params }: { params: { id: string } }) {
     <>
       <PageTitleBar workoutId={workout.id} workoutTitle={workout.name} />
 
-      <div className="flex-1 p-4">
-        <div className="mx-auto">
+      <div className="flex-1 p-6">
+        <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="md:col-span-3">
               <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">

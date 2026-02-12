@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import PageTitleBar from "../components/page-title-bar";
-import { TabItem } from "../../components/tabs";
-import Tabs from "../../components/tabs";
+import { CustomTabs, TabItem } from "@/components/ui/custom-tabs";
 import ProfileAvatar from "../../components/profile-avatar";
 import FormField from "../../components/form-field";
 import PasswordSection from "../../components/password-section";
@@ -25,7 +24,7 @@ export default function AsmeninemPaskyraPage() {
     name: "",
     email: "",
     birthDate: "",
-    gender: "Nepasirenkta",
+    gender: "",
     avatar: null as string | null,
     provider: "credentials",
     emailNotifications: true,
@@ -55,7 +54,7 @@ export default function AsmeninemPaskyraPage() {
             name: user.name || "",
             email: user.email || "",
             birthDate: user.birthDate ? user.birthDate.split('T')[0] : "",
-            gender: user.gender || "Nepasirenkta",
+            gender: user.gender || "",
             avatar: user.image,
             provider: user.provider || "credentials",
             emailNotifications: user.emailNotifications ?? true,
@@ -156,7 +155,7 @@ export default function AsmeninemPaskyraPage() {
         }));
 
         // Update session if needed
-        if (field === "name" || field === "email") {
+        if (field === "name" || field === "email" || field === "gender") {
           await updateSession();
         }
       } else {
@@ -374,13 +373,17 @@ export default function AsmeninemPaskyraPage() {
                     <label className="text-sm font-medium text-gray-700">Lytis</label>
                   </div>
                   <div className="flex items-center space-x-6">
-                    {["Nepasirenkta", "Vyras", "Moteris"].map((option) => (
-                      <label key={option} className="flex items-center">
+                    {[
+                      { value: "", label: "Nepasirenkta" },
+                      { value: "male", label: "Vyras" },
+                      { value: "female", label: "Moteris" }
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center">
                         <input
                           type="radio"
                           name="gender"
-                          value={option}
-                          checked={userData.gender === option}
+                          value={option.value}
+                          checked={userData.gender === option.value}
                           onChange={async (e) => {
                             setUserData(prev => ({
                               ...prev,
@@ -394,7 +397,7 @@ export default function AsmeninemPaskyraPage() {
                             accentColor: '#60988E'
                           }}
                         />
-                        <span className={`text-sm ${saving ? 'text-gray-400' : 'text-gray-900'}`}>{option}</span>
+                        <span className={`text-sm ${saving ? 'text-gray-400' : 'text-gray-900'}`}>{option.label}</span>
                       </label>
                     ))}
                   </div>
@@ -1117,11 +1120,11 @@ export default function AsmeninemPaskyraPage() {
 
         return (
           <div className="space-y-6">
-            <Tabs
+            <CustomTabs
               tabs={membershipSubTabs}
               activeTab={membershipSubTab}
               onTabChange={handleMembershipSubTabChange}
-              variant="sub"
+              variant="pill"
             />
             {renderMembershipSubContent()}
           </div>

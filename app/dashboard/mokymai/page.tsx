@@ -1,73 +1,50 @@
-"use client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../lib/auth-options";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import MokymaiPageClient from "./mokymai-page-client";
 
-import { useState } from "react";
-import PageTitleBar from "../components/page-title-bar";
-import { TabItem } from "../../components/tabs";
+export default async function MokymaiPage() {
+  const session = await getServerSession(authOptions);
 
-export default function MokymaiPage() {
-  const [activeTab, setActiveTab] = useState("personal");
+  if (!session) {
+    redirect("/auth/prisijungti?callbackUrl=/dashboard/mokymai");
+  }
 
-  const tabs: TabItem[] = [
-    {
-      id: "personal",
-      label: "Asmeninė informacija"
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      gender: true,
+      planId: true,
     },
-    {
-      id: "reports",
-      label: "Pranešimai"
+  });
+
+  // Fetch published courses
+  const courses = await prisma.course.findMany({
+    where: {
+      isPublished: true,
     },
-    {
-      id: "members",
-      label: "Narystė"
-    }
-  ];
+    include: {
+      lessons: {
+        select: {
+          id: true,
+          duration: true,
+        },
+      },
+    },
+    orderBy: { order: "asc" },
+  });
 
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-  };
+  const formattedCourses = courses.map((course) => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    imageUrl: course.imageUrl,
+    gender: course.gender,
+    difficulty: course.difficulty,
+    lessonCount: course.lessons.length,
+    totalDuration: course.lessons.reduce((sum, lesson) => sum + (lesson.duration || 0), 0),
+  }));
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "personal":
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Asmeninė informacija</h2>
-            <p>Čia bus rodoma asmeninės informacijos turinys.</p>
-          </div>
-        );
-      case "reports":
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Pranešimai</h2>
-            <p>Čia bus rodomi pranešimai.</p>
-          </div>
-        );
-      case "members":
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Narystė</h2>
-            <p>Čia bus rodoma narystės informacija.</p>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <>
-      <PageTitleBar
-        title="Mokymai"
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
-      <div className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto">
-          {renderTabContent()}
-        </div>
-      </div>
-    </>
-  );
+  return <MokymaiPageClient courses={formattedCourses} userGender={user?.gender || null} />;
 }
-

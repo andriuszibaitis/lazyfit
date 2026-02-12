@@ -72,6 +72,7 @@ export const authOptions: NextAuthOptions = {
             name: true,
             role: true,
             image: true,
+            gender: true,
             planId: true,
             membershipStatus: true,
             membership: {
@@ -87,11 +88,12 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           // Atnaujinti token su naujausiais duomenimis
           token.id = dbUser.id;
-          token.name = dbUser.name;
+          token.name = dbUser.name ?? undefined;
           token.role = dbUser.role;
-          token.picture = dbUser.image;
-          token.planId = dbUser.planId;
-          token.membershipStatus = dbUser.membershipStatus;
+          token.picture = dbUser.image ?? undefined;
+          token.gender = dbUser.gender ?? undefined;
+          token.planId = dbUser.planId ?? undefined;
+          token.membershipStatus = dbUser.membershipStatus ?? undefined;
           token.membershipId = dbUser.membership?.id;
           token.membershipName = dbUser.membership?.name;
 
@@ -109,6 +111,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.image = token.picture as string | undefined;
         session.user.provider = token.provider as string;
+        session.user.gender = token.gender as string | undefined;
         session.user.planId = token.planId as string | undefined;
         session.user.membershipStatus = token.membershipStatus as
           | string
@@ -151,7 +154,25 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === "development",
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: `lazyfit.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: `lazyfit.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    callbackUrl: {
+      name: `lazyfit.callback-url`,
       options: {
         httpOnly: true,
         sameSite: "lax",

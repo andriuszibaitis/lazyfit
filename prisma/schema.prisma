@@ -35,6 +35,12 @@ model User {
 
   foodProducts FoodProduct[]
   invoices     Invoice[]
+  userNutritionPlans UserNutritionPlan[]
+  mealLogs     UserMealLog[]
+  userQuestions UserQuestion[]
+  bodyMeasurements BodyMeasurement[]
+  progressPhotos   ProgressPhoto[]
+  userAchievements UserAchievement[]
 }
 
 model Account {
@@ -102,6 +108,7 @@ model Membership {
   nutritionPlans    NutritionPlan[]
   trainingPrograms  TrainingProgram[]
   workouts          Workout[]
+  courses           Course[]
 }
 
 model MenuItem {
@@ -147,11 +154,12 @@ model FoodProduct {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userId      String?  
-  isUserCreated Boolean @default(false) 
+  userId      String?
+  isUserCreated Boolean @default(false)
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   recipeIngredients RecipeIngredient[]
+  mealLogItems      UserMealLogItem[]
 }
 
 model RecipeCategory {
@@ -229,8 +237,11 @@ model NutritionPlan {
   id          String   @id @default(cuid())
   name        String
   description String?  @db.Text
-  gender      String   @default("all") 
-  membershipId String? 
+  benefits    String?  @db.Text
+  gender      String   @default("all")
+  icon        String?  @default("swimming")
+  isPopular   Boolean  @default(false)
+  membershipId String?
   membership  Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
   imageUrl    String?  @db.Text
   videoUrl    String?  @db.Text
@@ -276,6 +287,36 @@ model NutritionPlanMealItem {
   meal            NutritionPlanMeal @relation(fields: [mealId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// User's personal nutrition plan (created by user)
+model UserNutritionPlan {
+  id              String   @id @default(cuid())
+  name            String
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Calculator data
+  goal            String   // maintain, lose, gain
+  activityLevel   String   // sedentary, light, moderate, active, very_active, extra_active
+  gender          String   // male, female
+  age             Int
+  height          Float    // cm
+  weight          Float    // kg
+
+  // Calculated values
+  bmr             Float    // Basal Metabolic Rate
+  tdee            Float    // Total Daily Energy Expenditure
+  targetCalories  Float    // Target calories based on goal
+
+  // Optional reference to source plan
+  icon            String?  // Icon from source nutrition plan (e.g., "swimming", "running")
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  mealLogs        UserMealLog[]
 }
 
 model TrainingProgram {
@@ -425,4 +466,210 @@ model Invoice {
   updatedAt       DateTime @updatedAt
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// User's daily meal tracking
+model UserMealLog {
+  id                  String   @id @default(cuid())
+  userId              String
+  userNutritionPlanId String
+  date                DateTime @db.Date
+  mealName            String   // Pusryčiai, Pietūs, Vakarienė, Užkandis, etc.
+  mealOrder           Int      @default(0) // Order of meal in day
+
+  // Calculated totals for this meal
+  totalCalories       Float    @default(0)
+  totalProtein        Float    @default(0)
+  totalCarbs          Float    @default(0)
+  totalFat            Float    @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userNutritionPlan   UserNutritionPlan @relation(fields: [userNutritionPlanId], references: [id], onDelete: Cascade)
+  items               UserMealLogItem[]
+
+  @@unique([userId, userNutritionPlanId, date, mealName])
+}
+
+// Individual food items in a meal log
+model UserMealLogItem {
+  id              String   @id @default(cuid())
+  userMealLogId   String
+  foodProductId   String?  // Reference to FoodProduct (null if custom entry)
+  foodProductName String   // Store name for display
+  quantity        Float    // Amount in grams or units
+  unit            String   @default("g")
+
+  // Nutritional values for this item (calculated based on quantity)
+  calories        Float
+  protein         Float
+  carbs           Float
+  fat             Float
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userMealLog     UserMealLog @relation(fields: [userMealLogId], references: [id], onDelete: Cascade)
+  foodProduct     FoodProduct? @relation(fields: [foodProductId], references: [id])
+}
+
+// Educational Course (Mokymai)
+model Course {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?  @db.Text
+  about        String?  @db.Text  // Apie mokymus
+  targetAudience String? @db.Text // Kam skirta
+  whatYouLearn String?  @db.Text  // Ką išmoksi (JSON array)
+  whatIsIncluded String? @db.Text // Kas įtraukta (JSON array)
+  imageUrl     String?  @db.Text
+  gender       String   @default("all") // "all", "male", "female"
+  difficulty   String   @default("beginner") // "beginner", "intermediate", "advanced"
+  isPublished  Boolean  @default(false)
+  membershipId String?
+  membership   Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  lessons      CourseLesson[]
+}
+
+// Course Lesson (Video or Text content)
+model CourseLesson {
+  id          String   @id @default(cuid())
+  courseId    String
+  title       String
+  type        String   // "video" or "text"
+  content     String?  @db.Text // For text lessons - HTML/markdown content
+  videoUrl    String?  @db.Text // For video lessons - video URL
+  duration    Int?     // Duration in minutes
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// FAQ Category
+model FAQCategory {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?  @db.Text
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       FAQItem[]
+}
+
+// FAQ Item (Question & Answer)
+model FAQItem {
+  id          String   @id @default(cuid())
+  categoryId  String
+  question    String   @db.Text
+  answer      String   @db.Text
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    FAQCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model UserQuestion {
+  id          String   @id @default(cuid())
+  userId      String
+  question    String   @db.Text
+  status      String   @default("pending") // pending, answered, closed
+  answer      String?  @db.Text
+  answeredAt  DateTime?
+  answeredBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Body Measurements tracking
+model BodyMeasurement {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @db.Date
+
+  // Measurements in respective units
+  weight      Float?   // kg
+  shoulders   Float?   // cm (Pečiai)
+  chest       Float?   // cm (Krūtinė)
+  biceps      Float?   // cm (Bicepsas)
+  forearm     Float?   // cm (Dilbis)
+  waist       Float?   // cm (Liemuo)
+  belly       Float?   // cm (Pilvas)
+  hips        Float?   // cm (Klubai/sėdmenys)
+  thigh       Float?   // cm (Šlaunis)
+  calf        Float?   // cm (Blauzda)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+// Progress Photos tracking
+model ProgressPhoto {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @db.Date
+
+  // Photo URLs (Vercel Blob)
+  frontUrl    String?  @db.Text
+  sideUrl     String?  @db.Text
+  backUrl     String?  @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+// Achievement definitions
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique // Unique code for achievement (e.g., "centimeter_killer")
+  title       String
+  description String   @db.Text
+  iconUrl     String?  @db.Text
+  iconSvg     String?  @db.Text // Raw SVG code
+  trigger     String?  // Trigger type: first_measurement, first_workout, first_photo, workout_streak_30, etc.
+  triggerValue Int?    // Value for trigger (e.g., 30 for streak, 100 for total workouts)
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userAchievements UserAchievement[]
+}
+
+// User's unlocked achievements
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
 }

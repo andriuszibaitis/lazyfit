@@ -1,0 +1,296 @@
+# LazyFit - Projekto Analizė
+
+## Apžvalga
+
+**LazyFit** yra visapusė fitnes ir sveikatingumo platforma, sukurta naudojant moderniausias web technologijas. Platforma apima mitybos planavimą, treniruočių programas, edukacinio turinio kursus ir narystės sistemą.
+
+---
+
+## Failų Statistika
+
+| Kategorija | Kiekis |
+|------------|--------|
+| TSX komponentai | ~275 failai |
+| TypeScript failai | ~307 failai |
+| Puslapiai (pages) | 60 page.tsx |
+| API maršrutai | 83 route.ts |
+| Layout failai | 5 |
+| UI komponentai | 35+ |
+| Prisma modeliai | 31 |
+
+### Puslapių pasiskirstymas
+
+- **Dashboard puslapiai:** 29
+- **Admin puslapiai:** 31
+- **Autentifikacijos puslapiai:** 6
+
+---
+
+## Technologijų Stekas
+
+### Frontend
+
+| Technologija | Versija | Paskirtis |
+|--------------|---------|-----------|
+| Next.js | 15.2.3 | Framework (App Router) |
+| React | 19.0.0 | UI biblioteka |
+| TypeScript | 5.x | Tipo saugumas |
+| Tailwind CSS | 4.x | Stilizavimas |
+| Radix UI | - | UI komponentai |
+
+### Backend
+
+| Technologija | Versija | Paskirtis |
+|--------------|---------|-----------|
+| Prisma | 6.5.0 | ORM |
+| MySQL | - | Duomenų bazė |
+| NextAuth | 4.24.11 | Autentifikacija |
+| bcrypt | 5.1.1 | Slaptažodžių šifravimas |
+| Nodemailer | 7.0.6 | El. pašto siuntimas |
+
+### Papildomos bibliotekos
+
+| Biblioteka | Paskirtis |
+|------------|-----------|
+| react-hook-form + Zod | Formų valdymas ir validacija |
+| CKEditor 5 | Rich text redaktorius |
+| @dnd-kit | Drag & Drop funkcionalumas |
+| Chart.js | Duomenų vizualizacija |
+| Vercel Blob | Failų saugojimas |
+| Axios | HTTP užklausos |
+| date-fns | Datų manipuliacija |
+| Lucide React | Ikonos |
+
+---
+
+## Pagrindinės Funkcijos
+
+### 1. Autentifikacija ir Vartotojų Valdymas
+- Kredencialais paremta autentifikacija
+- El. pašto patvirtinimas
+- Slaptažodžio atstatymas
+- Sesijų valdymas
+- Avataro įkėlimas
+- Paskyros ištrynimas
+
+### 2. Mitybos Sistema
+- Maisto produktų duomenų bazė
+- Kalorijų skaičiuoklė (BMR, TDEE)
+- Mitybos planų kūrimas
+- Asmeniniai mitybos planai
+- Valgių sekimas
+- Makroelementų stebėjimas
+
+### 3. Receptų Sistema
+- Receptų kūrimas ir valdymas
+- Kategorijos
+- Ingredientų valdymas
+- Mėgstami receptai
+- Sunkumo lygiai
+- Paruošimo/gaminimo laikas
+
+### 4. Treniruočių Sistema
+- Pratimų biblioteka
+- Treniruočių kūrimas
+- Programų organizavimas
+- Periodizacija
+- Supersetų valdymas
+- Raumenų grupių sekimas
+
+### 5. Kursų Sistema
+- Edukacinių kursų kūrimas
+- Video ir tekstinės pamokos
+- Sunkumo lygiai
+- Pamokų pertvarkymas
+
+### 6. Narystės Sistema
+- Narystės planų valdymas
+- Kainodara su nuolaidomis
+- Prieigos kontrolė pagal funkcijas
+- Sąskaitų generavimas
+
+### 7. Turinio Valdymas
+- Dinaminių puslapių kūrimas
+- Meniu valdymas
+- El. pašto šablonai
+
+---
+
+## Duomenų Bazės Modeliai (31)
+
+### Autentifikacija (4)
+- `User` - Vartotojų paskyros
+- `Account` - OAuth prisijungimai
+- `Session` - Sesijų valdymas
+- `VerificationToken` - Patvirtinimo tokenai
+
+### Turinys (7)
+- `Page` - Dinaminiai puslapiai
+- `MenuItem` - Meniu struktūra
+- `EmailTemplate` - El. pašto šablonai
+- `RecipeCategory` - Receptų kategorijos
+- `Recipe` - Receptai
+- `RecipeIngredient` - Receptų ingredientai
+- `FoodProduct` - Maisto produktai
+
+### Narystės (2)
+- `Membership` - Narystės planai
+- `RecipeMembership` - Receptų prieiga
+
+### Mityba (6)
+- `NutritionPlan` - Mitybos planai
+- `NutritionPlanDay` - Planų dienos
+- `NutritionPlanMeal` - Valgiai
+- `NutritionPlanMealItem` - Valgio elementai
+- `UserNutritionPlan` - Asmeniniai planai
+- `UserMealLog` / `UserMealLogItem` - Valgių sekimas
+
+### Treniruotės (7)
+- `TrainingProgram` - Treniruočių programos
+- `Workout` - Treniruotės
+- `Exercise` - Pratimai
+- `WorkoutExercise` - Pratimų ryšiai
+- `ProgramWorkout` - Programų treniruotės
+- `ProgramPeriod` - Periodai
+- `PeriodWeek` - Savaitės
+
+### Kursai (2)
+- `Course` - Kursai
+- `CourseLesson` - Pamokos
+
+### Atsiskaitymai (1)
+- `Invoice` - Sąskaitos
+
+---
+
+## API Maršrutai (83 endpoints)
+
+### Pagrindinės kategorijos
+
+| Kategorija | Endpoints | Aprašymas |
+|------------|-----------|-----------|
+| Autentifikacija | 6 | Prisijungimas, registracija, slaptažodžio atstatymas |
+| Vartotojai | 6 | Profilis, slaptažodis, avataras |
+| Mityba | 10 | Maisto produktai, valgių sekimas |
+| Mitybos planai | 9 | Vartotojų ir admin planai |
+| Receptai | 6 | CRUD operacijos |
+| Treniruotės | 10 | Pratimai, treniruotės, programos |
+| Kursai | 8 | Kursai ir pamokos |
+| Narystės | 4 | Planų valdymas |
+| Admin | 24+ | Turinio administravimas |
+
+---
+
+## UI Komponentų Biblioteka
+
+### Radix UI paremti komponentai (35+)
+
+**Formos:**
+- Input, Textarea, Label, Checkbox, Select, Switch
+
+**Išdėstymas:**
+- Card, Dialog, Popover, Table, Scroll-area
+
+**Interaktyvūs:**
+- Button, Tabs, Command, Toggle-button-group
+
+**Atsiliepimai:**
+- Alert-dialog, Toast, Confirm-modal
+
+**Funkcionalūs:**
+- Modal, Image-upload, Filter-panel, Pagination
+
+---
+
+## Projekto Struktūra
+
+```
+lazyfit/
+├── app/
+│   ├── admin/           # Admin skydelis (31 puslapiai)
+│   ├── api/             # API endpoints (83 maršrutai)
+│   ├── auth/            # Autentifikacija (lietuviškai)
+│   ├── dashboard/       # Vartotojo skydelis (29 puslapiai)
+│   ├── components/      # Bendri komponentai
+│   ├── lib/             # Pagalbinės funkcijos
+│   ├── hooks/           # React hooks
+│   ├── types/           # TypeScript tipai
+│   └── providers/       # Context providers
+├── components/
+│   ├── ui/              # UI komponentų biblioteka
+│   └── icons/           # Ikonomponentai
+├── prisma/
+│   └── schema.prisma    # Duomenų bazės schema
+├── public/              # Statiniai failai
+└── docs/                # Dokumentacija
+```
+
+---
+
+## Sudėtingumo Įvertinimas
+
+### Projekto lygis: **Senior**
+
+| Aspektas | Sudėtingumas | Argumentas |
+|----------|--------------|------------|
+| Architektūra | Aukštas | Next.js 15 App Router, 60+ puslapių, 83 API endpoints |
+| Duomenų bazė | Aukštas | 31 modelis su sudėtingais ryšiais |
+| Autentifikacija | Vidutinis-Aukštas | NextAuth su el. pašto patvirtinimu |
+| UI Sistema | Aukštas | Custom design system, 35+ komponentai |
+| Verslo logika | Aukštas | Mityba, treniruotės, narystės, kursai |
+| Integracijos | Vidutinis | Vercel Blob, email, video player |
+
+### Reikalingos kompetencijos:
+- **React/Next.js:** Expert lygis
+- **TypeScript:** Advanced
+- **Prisma/SQL:** Advanced
+- **Tailwind CSS:** Advanced
+- **Autentifikacija:** Advanced
+- **REST API dizainas:** Advanced
+- **UX/UI:** Geras supratimas
+
+---
+
+## Kūrimo Laiko Įvertinimas
+
+### Optimistinis scenarijus (Patyręs komanda)
+
+| Fazė | Trukmė | Pastabos |
+|------|--------|----------|
+| Planavimas ir dizainas | 2-3 savaitės | Wireframes, DB schema, API dizainas |
+| Bazinė infrastruktūra | 2-3 savaitės | Auth, DB, UI biblioteka |
+| Admin skydelis | 4-5 savaitės | CRUD visoms entitetoms |
+| Dashboard | 4-5 savaitės | Vartotojo funkcijos |
+| Mitybos sistema | 3-4 savaitės | Skaičiuoklė, planai, sekimas |
+| Treniruočių sistema | 2-3 savaitės | Pratimai, treniruotės, programos |
+| Kursų sistema | 1-2 savaitės | Video, pamokos |
+| Narystės sistema | 1-2 savaitės | Planai, prieiga |
+| Testavimas ir QA | 2-3 savaitės | Bug fixing, UX polish |
+| **VISO** | **21-30 savaičių** | ~5-7 mėnesiai |
+
+### Realistikas scenarijus (1 Senior dev)
+
+| Fazė | Trukmė |
+|------|--------|
+| Pilnas projektas | 6-9 mėnesiai |
+
+### Pesimistinis scenarijus (Junior-Mid komanda)
+
+| Fazė | Trukmė |
+|------|--------|
+| Pilnas projektas | 10-14 mėnesių |
+
+---
+
+## Išvados
+
+LazyFit yra **enterprise lygio** full-stack aplikacija su:
+
+- ✅ Moderniu tech stack'u (Next.js 15, React 19, TypeScript)
+- ✅ Išsamia duomenų baze (31 modelis)
+- ✅ Pilnu API sluoksniu (83 endpoints)
+- ✅ Profesionalia UI sistema
+- ✅ Kompleksine verslo logika
+- ✅ Lietuviška lokalizacija
+
+Projektas reikalauja **senior lygio** programavimo įgūdžių ir yra tinkamas **komerciniam naudojimui**.

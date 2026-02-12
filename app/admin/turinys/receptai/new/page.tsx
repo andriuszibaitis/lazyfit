@@ -25,10 +25,16 @@ import {
   Loader2,
   ArrowLeft,
   Users,
-  BookOpen,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function NewRecipePage() {
   const router = useRouter();
@@ -69,6 +75,11 @@ export default function NewRecipePage() {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  // New category dialog state
+  const [isNewCategoryDialogOpen, setIsNewCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategorySubmitting, setNewCategorySubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,6 +216,39 @@ export default function NewRecipePage() {
     setAvailableToAll(checked);
     if (checked) {
       setSelectedMemberships([]);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    try {
+      setNewCategorySubmitting(true);
+      const response = await fetch("/api/admin/recipe-categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newCategoryName,
+          isActive: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create category");
+      }
+
+      const newCategory = await response.json();
+      setCategories([...categories, newCategory]);
+      setSelectedCategory(newCategory.id);
+      setNewCategoryName("");
+      setIsNewCategoryDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      setError("Nepavyko sukurti kategorijos");
+    } finally {
+      setNewCategorySubmitting(false);
     }
   };
 
@@ -470,35 +514,37 @@ export default function NewRecipePage() {
 
               <div>
                 <Label htmlFor="category">Kategorija</Label>
-                <div className="flex items-center mt-1">
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                  >
-                    <SelectTrigger id="category" className="w-full">
-                      <SelectValue placeholder="Pasirinkite kategoriją" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nepriskirta</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="ml-2"
-                    onClick={() =>
-                      router.push("/admin/turinys/receptai/kategorijos")
+                <Select
+                  value={selectedCategory}
+                  onValueChange={(value) => {
+                    if (value === "__new__") {
+                      setIsNewCategoryDialogOpen(true);
+                    } else {
+                      setSelectedCategory(value);
                     }
-                  >
-                    <BookOpen className="h-4 w-4" />
-                  </Button>
-                </div>
+                  }}
+                >
+                  <SelectTrigger id="category" className="w-full mt-1">
+                    <SelectValue placeholder="Pasirinkite kategoriją" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nepriskirta</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem
+                      value="__new__"
+                      className="text-[#60988E] font-medium"
+                    >
+                      <span className="flex items-center">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Sukurti naują kategoriją
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -731,17 +777,33 @@ export default function NewRecipePage() {
             <h2 className="text-lg font-medium mb-4">Kategorija</h2>
             <Select
               value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              onValueChange={(value) => {
+                if (value === "__new__") {
+                  setIsNewCategoryDialogOpen(true);
+                } else {
+                  setSelectedCategory(value);
+                }
+              }}
             >
-              <SelectTrigger id="category">
+              <SelectTrigger id="category-sidebar">
                 <SelectValue placeholder="Pasirinkite kategoriją" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">Nepriskirta</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
                 ))}
+                <SelectItem
+                  value="__new__"
+                  className="text-[#60988E] font-medium"
+                >
+                  <span className="flex items-center">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Sukurti naują kategoriją
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </Card>
@@ -812,6 +874,57 @@ export default function NewRecipePage() {
           </Card>
         </div>
       </div>
+
+      {/* New Category Dialog */}
+      <Dialog
+        open={isNewCategoryDialogOpen}
+        onOpenChange={setIsNewCategoryDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sukurti naują kategoriją</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-category-name">Pavadinimas</Label>
+              <Input
+                id="new-category-name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Kategorijos pavadinimas"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateCategory();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsNewCategoryDialogOpen(false);
+                setNewCategoryName("");
+              }}
+              disabled={newCategorySubmitting}
+            >
+              Atšaukti
+            </Button>
+            <Button
+              onClick={handleCreateCategory}
+              disabled={newCategorySubmitting || !newCategoryName.trim()}
+              className="bg-[#60988E] hover:bg-[#4e7d75]"
+            >
+              {newCategorySubmitting && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Sukurti
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

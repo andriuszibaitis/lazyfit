@@ -29,11 +29,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Trash2, Save, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { nutritionPlanIcons } from "@/components/icons/nutrition-plan-icons";
 
 const formSchema = z.object({
   name: z.string().min(1, "Pavadinimas yra privalomas"),
   description: z.string().optional(),
+  benefits: z.string().optional(),
   gender: z.string().default("all"),
+  icon: z.string().default("swimming"),
+  isPopular: z.boolean().default(false),
   membershipId: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
@@ -82,7 +87,10 @@ interface NutritionPlan {
   id: string;
   name: string;
   description: string | null;
+  benefits: string | null;
   gender: string;
+  icon: string | null;
+  isPopular: boolean;
   membershipId: string | null;
   imageUrl: string | null;
   videoUrl: string | null;
@@ -112,7 +120,10 @@ export default function NutritionPlanForm({
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
+      benefits: initialData?.benefits || "",
       gender: initialData?.gender || "all",
+      icon: initialData?.icon || "swimming",
+      isPopular: initialData?.isPopular || false,
       membershipId: initialData?.membershipId || undefined,
       imageUrl: initialData?.imageUrl || "",
       videoUrl: initialData?.videoUrl || "",
@@ -468,6 +479,27 @@ export default function NutritionPlanForm({
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="benefits"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nauda</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="pvz. Svorio metimas, Energija"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Trumpai aprašykite naudą (3-4 žodžiai)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -532,71 +564,137 @@ export default function NutritionPlanForm({
                     />
                   </div>
 
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ikona</FormLabel>
+                        <FormDescription className="mb-3">
+                          Pasirinkite ikoną, kuri bus rodoma mitybos plano kortelėje
+                        </FormDescription>
+                        <FormControl>
+                          <div className="flex flex-wrap gap-3">
+                            {nutritionPlanIcons.map(({ id, label, Icon }) => (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => field.onChange(id)}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                                  field.value === id
+                                    ? "border-[#34786C] bg-[#34786C]/10"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                <Icon
+                                  size={32}
+                                  className={
+                                    field.value === id
+                                      ? "text-[#34786C]"
+                                      : "text-gray-500"
+                                  }
+                                />
+                                <span
+                                  className={`text-xs font-medium ${
+                                    field.value === id
+                                      ? "text-[#34786C]"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  {label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nuotrauka</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="videoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Video URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://youtube.com/watch?v=..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Įveskite video URL adresą (YouTube, Vimeo ir t.t.)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="imageUrl"
+                      name="isPublished"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nuotraukos URL</FormLabel>
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                           <FormControl>
-                            <Input
-                              placeholder="https://example.com/image.jpg"
-                              {...field}
-                              value={field.value || ""}
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormDescription>
-                            Įveskite nuotraukos URL adresą
-                          </FormDescription>
-                          <FormMessage />
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Publikuoti</FormLabel>
+                            <FormDescription>
+                              Pažymėkite, jei norite, kad mitybos planas būtų
+                              matomas vartotojams
+                            </FormDescription>
+                          </div>
                         </FormItem>
                       )}
                     />
 
                     <FormField
                       control={form.control}
-                      name="videoUrl"
+                      name="isPopular"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Video URL</FormLabel>
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                           <FormControl>
-                            <Input
-                              placeholder="https://youtube.com/watch?v=..."
-                              {...field}
-                              value={field.value || ""}
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormDescription>
-                            Įveskite video URL adresą (YouTube, Vimeo ir t.t.)
-                          </FormDescription>
-                          <FormMessage />
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Populiarus</FormLabel>
+                            <FormDescription>
+                              Pažymėkite, jei tai populiariausias mitybos planas
+                            </FormDescription>
+                          </div>
                         </FormItem>
                       )}
                     />
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="isPublished"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Publikuoti</FormLabel>
-                          <FormDescription>
-                            Pažymėkite, jei norite, kad mitybos planas būtų
-                            matomas vartotojams
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -22,6 +22,9 @@ import {
   Apple,
   Tag,
   List,
+  HelpCircle,
+  MessageSquareMore,
+  Trophy,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -155,6 +158,18 @@ export default function AdminSidebar() {
         },
       ],
     },
+    {
+      name: "DUK",
+      href: "/admin/turinys/klausimai",
+      icon: <HelpCircle className="h-5 w-5" />,
+      type: "link",
+    },
+    {
+      name: "Pasiekimai",
+      href: "/admin/turinys/pasiekimai",
+      icon: <Trophy className="h-5 w-5" />,
+      type: "link",
+    },
   ];
 
   const menuItems = [
@@ -194,6 +209,12 @@ export default function AdminSidebar() {
       name: "Maistas",
       href: "/admin/maistas",
       icon: <Apple className="h-5 w-5" />,
+      type: "link",
+    },
+    {
+      name: "Klientų klausimai",
+      href: "/admin/klientu-klausimai",
+      icon: <MessageSquareMore className="h-5 w-5" />,
       type: "link",
     },
     {
