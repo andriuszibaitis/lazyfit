@@ -1,3 +1,19 @@
+interface FoodProduct {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+interface MealItem {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  sugar?: number;
+}
+
 export async function calculateNutrition(ingredients: any[]) {
   try {
     const prisma = (await import("@/lib/prisma")).default;
@@ -83,9 +99,9 @@ export function calculateTotalNutrition(items: MealItem[]) {
       protein: acc.protein + item.protein,
       carbs: acc.carbs + item.carbs,
       fat: acc.fat + item.fat,
-      fiber: acc.fiber + (item.fiber || 0),
-      sugar: acc.sugar + (item.sugar || 0),
+      fiber: (acc.fiber || 0) + (item.fiber || 0),
+      sugar: (acc.sugar || 0) + (item.sugar || 0),
     }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 } as { calories: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number }
   );
 }

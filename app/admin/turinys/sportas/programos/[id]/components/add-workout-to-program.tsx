@@ -22,10 +22,14 @@ interface Workout {
 interface Exercise {
   id: string;
   name: string;
+  description: string | null;
+  targetMuscleGroup: string | null;
 }
 
 interface WorkoutExercise {
   id: string;
+  workoutId: string;
+  exerciseId: string;
   order: number;
   sets: number | null;
   reps: string | null;

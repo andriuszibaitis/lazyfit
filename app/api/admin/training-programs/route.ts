@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to create training program",
-        details: error.message || "Unknown error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

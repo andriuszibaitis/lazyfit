@@ -5,13 +5,13 @@ import prisma from "@/lib/prisma";
 import SideNavigation from "@/app/dashboard/components/side-navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function DashboardDynamicPage({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {

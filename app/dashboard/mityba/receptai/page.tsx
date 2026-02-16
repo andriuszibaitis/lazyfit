@@ -59,10 +59,10 @@ export default async function ReceptaiPage() {
     cookingTime: recipe.cookingTime,
     servings: recipe.servings,
     difficulty: recipe.difficulty,
-    calories: recipe.caloriesPerServing || 0,
-    protein: recipe.proteinPerServing || 0,
-    carbs: recipe.carbsPerServing || 0,
-    fat: recipe.fatPerServing || 0,
+    calories: recipe.totalCalories ? Math.round(recipe.totalCalories / recipe.servings) : 0,
+    protein: recipe.totalProtein ? Math.round(recipe.totalProtein / recipe.servings) : 0,
+    carbs: recipe.totalCarbs ? Math.round(recipe.totalCarbs / recipe.servings) : 0,
+    fat: recipe.totalFat ? Math.round(recipe.totalFat / recipe.servings) : 0,
     category: recipe.category?.name || null,
   }));
 

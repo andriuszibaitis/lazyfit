@@ -293,15 +293,20 @@ export default async function MembershipsPage() {
 }
 
 function getDurationText(days: number): string {
-  if (days % 365 === 0) {
-    const years = days / 365;
-    return `${years} ${years === 1 ? "metai" : "metai"}`;
-  } else if (days % 30 === 0) {
-    const months = days / 30;
-    return `${months} ${
-      months === 1 ? "mėnuo" : months < 5 ? "mėnesiai" : "mėnesių"
-    }`;
+  if (days >= 365) {
+    const years = Math.floor(days / 365);
+    const remainingDays = days % 365;
+    const yearText = years === 1 ? "metai" : "metai";
+    if (remainingDays === 0) {
+      return `d. (${years} ${yearText})`;
+    }
+    return `d. (${years} ${yearText} ${remainingDays} d.)`;
+  } else if (days >= 30) {
+    const months = Math.floor(days / 30);
+    const monthText =
+      months === 1 ? "mėnuo" : months < 10 ? "mėnesiai" : "mėnesių";
+    return `d. (${months} ${monthText})`;
   } else {
-    return `${days} ${days === 1 ? "diena" : days < 10 ? "dienos" : "dienų"}`;
+    return days === 1 ? "diena" : "dienų";
   }
 }

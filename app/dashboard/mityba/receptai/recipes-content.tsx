@@ -10,10 +10,10 @@ interface Recipe {
   title: string;
   description: string | null;
   image: string;
-  preparationTime: number;
-  cookingTime: number;
+  preparationTime: number | null;
+  cookingTime: number | null;
   servings: number;
-  difficulty: string;
+  difficulty: string | null;
   calories: number;
   protein: number;
   carbs: number;

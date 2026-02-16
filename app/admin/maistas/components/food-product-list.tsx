@@ -381,7 +381,8 @@ export default function FoodProductsList() {
                       onClick={() =>
                         handlePageChange(Math.max(1, currentPage - 1))
                       }
-                      disabled={currentPage === 1}
+                      aria-disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -401,7 +402,8 @@ export default function FoodProductsList() {
                       onClick={() =>
                         handlePageChange(Math.min(totalPages, currentPage + 1))
                       }
-                      disabled={currentPage === totalPages}
+                      aria-disabled={currentPage === totalPages}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>

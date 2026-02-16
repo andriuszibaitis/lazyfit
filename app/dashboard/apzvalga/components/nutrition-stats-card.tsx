@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 
@@ -23,34 +23,119 @@ interface NutritionStatsCardProps {
   targetCalories?: number;
   period?: string;
   hasNutritionData?: boolean;
+  userWeight?: number;
 }
+
+const dayNames = ["S", "P", "A", "T", "K", "P", "Š"];
 
 export default function NutritionStatsCard({
   weeklyCalories = null,
   macros = null,
-  targetCalories = 2500,
+  targetCalories: initialTargetCalories = 2500,
   period = "Savaitė",
-  hasNutritionData = false,
+  hasNutritionData: initialHasNutritionData = false,
+  userWeight = 75,
 }: NutritionStatsCardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [hasNutritionData, setHasNutritionData] = useState(initialHasNutritionData);
+  const [targetCalories, setTargetCalories] = useState(initialTargetCalories);
+  const [fetchedWeeklyCalories, setFetchedWeeklyCalories] = useState<DayCalories[] | null>(weeklyCalories);
+  const [fetchedMacros, setFetchedMacros] = useState<MacroData[] | null>(macros);
 
-  // Default data for when there is nutrition data
-  const defaultWeeklyCalories = [
-    { day: "P", calories: 2400 },
-    { day: "A", calories: 2600 },
-    { day: "T", calories: 2200 },
-    { day: "K", calories: 3200 },
-    { day: "P", calories: 2500 },
-    { day: "Š", calories: 2300 },
-    { day: "S", calories: 2100 },
-  ];
+  const fetchNutritionStats = useCallback(async () => {
+    try {
+      // Get user's active nutrition plan (UserNutritionPlan from calculator)
+      const planRes = await fetch("/api/user-nutrition-plans");
+      if (!planRes.ok) return;
 
-  const defaultMacros = [
-    { label: "Angliavandeniai", value: 206, perKg: 1.6, color: "#60988E", percentage: 75 },
-    { label: "Baltymai", value: 128, perKg: 1.8, color: "#F98466", percentage: 85 },
-    { label: "Riebalai", value: 72, perKg: 1.0, color: "#334BA3", percentage: 65 },
-  ];
+      const plans = await planRes.json();
+      // Find the active plan
+      const activePlan = Array.isArray(plans)
+        ? plans.find((p: any) => p.isActive)
+        : plans?.plans?.find((p: any) => p.isActive) || null;
+
+      if (!activePlan) {
+        setHasNutritionData(false);
+        return;
+      }
+
+      if (activePlan.targetCalories) {
+        setTargetCalories(activePlan.targetCalories);
+      }
+
+      // Get meal logs for the past week
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+
+      const startStr = startDate.toISOString().split("T")[0];
+      const endStr = endDate.toISOString().split("T")[0];
+
+      const logsRes = await fetch(
+        `/api/meal-logs?startDate=${startStr}&endDate=${endStr}&planId=${activePlan.id}`
+      );
+
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+
+        if (Array.isArray(logsData) && logsData.length > 0) {
+          setHasNutritionData(true);
+
+          // Build weekly calories from actual logs
+          const dailyTotals: Record<string, { calories: number; protein: number; carbs: number; fat: number }> = {};
+
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(startDate);
+            d.setDate(d.getDate() + i);
+            const key = d.toISOString().split("T")[0];
+            dailyTotals[key] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+          }
+
+          logsData.forEach((log: any) => {
+            const logDate = new Date(log.date).toISOString().split("T")[0];
+            if (dailyTotals[logDate]) {
+              dailyTotals[logDate].calories += log.totalCalories || 0;
+              dailyTotals[logDate].protein += log.totalProtein || 0;
+              dailyTotals[logDate].carbs += log.totalCarbs || 0;
+              dailyTotals[logDate].fat += log.totalFat || 0;
+            }
+          });
+
+          const weekCalories: DayCalories[] = Object.entries(dailyTotals).map(([dateStr, totals]) => {
+            const d = new Date(dateStr);
+            return {
+              day: dayNames[d.getDay()],
+              calories: Math.round(totals.calories),
+            };
+          });
+
+          setFetchedWeeklyCalories(weekCalories);
+
+          // Calculate macro averages
+          const daysWithData = Object.values(dailyTotals).filter(d => d.calories > 0);
+          const numDays = daysWithData.length || 1;
+          const totalProtein = daysWithData.reduce((sum, d) => sum + d.protein, 0) / numDays;
+          const totalCarbs = daysWithData.reduce((sum, d) => sum + d.carbs, 0) / numDays;
+          const totalFat = daysWithData.reduce((sum, d) => sum + d.fat, 0) / numDays;
+
+          const tCals = activePlan.targetCalories || targetCalories;
+          const w = userWeight || 75;
+          setFetchedMacros([
+            { label: "Angliavandeniai", value: Math.round(totalCarbs), perKg: Math.round((totalCarbs / w) * 10) / 10, color: "#60988E", percentage: Math.min(100, Math.round((totalCarbs / (tCals * 0.5 / 4)) * 100)) },
+            { label: "Baltymai", value: Math.round(totalProtein), perKg: Math.round((totalProtein / w) * 10) / 10, color: "#F98466", percentage: Math.min(100, Math.round((totalProtein / (tCals * 0.3 / 4)) * 100)) },
+            { label: "Riebalai", value: Math.round(totalFat), perKg: Math.round((totalFat / w) * 10) / 10, color: "#334BA3", percentage: Math.min(100, Math.round((totalFat / (tCals * 0.25 / 9)) * 100)) },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching nutrition stats:", error);
+    }
+  }, [selectedPeriod, userWeight, targetCalories]);
+
+  useEffect(() => {
+    fetchNutritionStats();
+  }, [fetchNutritionStats]);
 
   const emptyMacros = [
     { label: "Angliavandeniai", value: 0, perKg: 0, color: "#60988E", percentage: 0 },
@@ -136,8 +221,24 @@ export default function NutritionStatsCard({
     );
   }
 
-  const displayWeeklyCalories = weeklyCalories || defaultWeeklyCalories;
-  const displayMacros = macros || defaultMacros;
+  const defaultWeeklyCalories = [
+    { day: "P", calories: 0 },
+    { day: "A", calories: 0 },
+    { day: "T", calories: 0 },
+    { day: "K", calories: 0 },
+    { day: "P", calories: 0 },
+    { day: "Š", calories: 0 },
+    { day: "S", calories: 0 },
+  ];
+
+  const defaultMacros = [
+    { label: "Angliavandeniai", value: 0, perKg: 0, color: "#60988E", percentage: 0 },
+    { label: "Baltymai", value: 0, perKg: 0, color: "#F98466", percentage: 0 },
+    { label: "Riebalai", value: 0, perKg: 0, color: "#334BA3", percentage: 0 },
+  ];
+
+  const displayWeeklyCalories = fetchedWeeklyCalories || defaultWeeklyCalories;
+  const displayMacros = fetchedMacros || defaultMacros;
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-[#E6E6E6]">

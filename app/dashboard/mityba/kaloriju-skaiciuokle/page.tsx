@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { CustomInput } from "@/components/ui/custom-input";
@@ -76,6 +77,7 @@ const faqData = [
 ];
 
 export default function KalorijuSkaiciuoklePage() {
+  const router = useRouter();
   // Calculator state
   const [selectedGoal, setSelectedGoal] = useState("maintain");
   const [selectedActivity, setSelectedActivity] = useState("sedentary");
@@ -83,6 +85,7 @@ export default function KalorijuSkaiciuoklePage() {
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
 
   // Calculate calories using Mifflin-St Jeor formula
   const calorieResults = useMemo(() => {
@@ -306,8 +309,44 @@ export default function KalorijuSkaiciuoklePage() {
             </div>
 
             {/* Submit button */}
-            <button className="w-full bg-[#60988E] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#34786C] transition-colors">
-              Pasirinkti mitybos planą
+            <button
+              type="button"
+              onClick={async () => {
+                if (!calorieResults) return;
+
+                const selectedCalories = calorieOptions[activeIndex]?.value;
+                if (!selectedCalories) return;
+
+                setIsCreatingPlan(true);
+                try {
+                  const response = await fetch("/api/user-nutrition-plans", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name: `Mano mitybos planas (${selectedCalories} kcal)`,
+                      goal: selectedGoal,
+                      activityLevel: selectedActivity,
+                      gender,
+                      age: parseInt(age),
+                      height: parseFloat(height),
+                      weight: parseFloat(weight),
+                      targetCalories: selectedCalories,
+                    }),
+                  });
+
+                  if (response.ok) {
+                    router.push("/dashboard/mityba/mitybos-planai");
+                  }
+                } catch (error) {
+                  console.error("Error creating plan:", error);
+                } finally {
+                  setIsCreatingPlan(false);
+                }
+              }}
+              disabled={!calorieResults || isCreatingPlan}
+              className="w-full bg-[#60988E] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#34786C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingPlan ? "Kuriamas planas..." : "Pasirinkti mitybos planą"}
             </button>
           </div>
 

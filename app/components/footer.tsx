@@ -27,10 +27,10 @@ export default function Footer() {
 
         {}
         <a
-          href="mailto:support@lazyfit.com"
+          href="mailto:info@lazyfit.lt"
           className="font-['mango'] text-[32px] md:text-[64px] block mb-12 hover:text-[#60988E] transition-colors"
         >
-          support@lazyfit.com
+          info@lazyfit.lt
         </a>
 
         {}
@@ -54,15 +54,25 @@ export default function Footer() {
 
           {}
           <div className="flex flex-col md:flex-row md:space-x-4 space-y-2 md:space-y-0 text-sm text-white font-[var(--font-outfit)] uppercase justify-center text-center md:text-center">
-            {footerMenuItems.map((item, index) => (
-              <Link
-                key={index}
-                href={item.href}
-                className="hover:text-[#60988E] transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {footerMenuItems.map((item, index) =>
+              item.href === "/" ? (
+                <a
+                  key={index}
+                  href={item.href}
+                  className="hover:text-[#60988E] transition-colors"
+                >
+                  {item.name}
+                </a>
+              ) : (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="hover:text-[#60988E] transition-colors"
+                >
+                  {item.name}
+                </Link>
+              )
+            )}
           </div>
 
           {}

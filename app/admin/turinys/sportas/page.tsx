@@ -45,9 +45,9 @@ export default function SportsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("programs");
-  const [programs, setPrograms] = useState([]);
-  const [workouts, setWorkouts] = useState([]);
-  const [exercises, setExercises] = useState([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [exercises, setExercises] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -65,7 +65,7 @@ export default function SportsPage() {
     }
   }, [pathname]);
 
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: string) => {
     setActiveTab(value);
 
     let newPath = "/admin/turinys/sportas";
@@ -125,7 +125,7 @@ export default function SportsPage() {
     }
   };
 
-  const handleDeleteItem = async (id, type) => {
+  const handleDeleteItem = async (id: string, type: string) => {
     if (
       !confirm(
         `Ar tikrai norite ištrinti šį ${
@@ -177,7 +177,7 @@ export default function SportsPage() {
             : type === "workout"
             ? "treniruotę"
             : "pratimą"
-        }: ${error.message}`
+        }: ${error instanceof Error ? error.message : "Nežinoma klaida"}`
       );
     }
   };
@@ -203,7 +203,7 @@ export default function SportsPage() {
         exercise.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getDifficultyLabel = (difficulty) => {
+  const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
       case "easy":
         return "Lengvas";
@@ -217,10 +217,10 @@ export default function SportsPage() {
     }
   };
 
-  const getMuscleGroupLabel = (muscleGroup) => {
+  const getMuscleGroupLabel = (muscleGroup: string) => {
     if (!muscleGroup) return "Neapibrėžta";
 
-    const muscleGroups = {
+    const muscleGroups: Record<string, string> = {
       chest: "Krūtinė",
       back: "Nugara",
       shoulders: "Pečiai",
@@ -243,10 +243,10 @@ export default function SportsPage() {
     return muscleGroups[muscleGroup] || muscleGroup;
   };
 
-  const getEquipmentLabel = (equipment) => {
+  const getEquipmentLabel = (equipment: string) => {
     if (!equipment) return "Nereikia įrangos";
 
-    const equipmentTypes = {
+    const equipmentTypes: Record<string, string> = {
       bodyweight: "Kūno svoris",
       dumbbells: "Hanteliai",
       barbell: "Štanga",

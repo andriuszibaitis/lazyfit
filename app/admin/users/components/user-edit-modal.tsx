@@ -168,15 +168,9 @@ export default function UserEditModal({ user }: UserEditModalProps) {
       });
 
       if (response.ok) {
-        setMessage({
-          type: "success",
-          text: "Vartotojo duomenys sėkmingai atnaujinti",
-        });
         router.refresh();
-
-        setTimeout(() => {
-          setIsOpen(false);
-        }, 2000);
+        setIsOpen(false);
+        setMessage(null);
       } else {
         const error = await response.text();
         setMessage({

@@ -14,6 +14,7 @@ interface Training {
   duration: number;
   level: string;
   isFavorite: boolean;
+  videoUrl: string;
   membershipId: string | null;
   membershipName: string | undefined;
   createdAt: string;

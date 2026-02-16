@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,8 +52,9 @@ const formSchema = z.object({
 export default function EditWorkoutPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -96,7 +97,7 @@ export default function EditWorkoutPage({
     const fetchWorkout = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/admin/workouts/${params.id}`);
+        const response = await fetch(`/api/admin/workouts/${id}`);
 
         if (response.ok) {
           const data = await response.json();
@@ -140,14 +141,14 @@ export default function EditWorkoutPage({
 
     fetchMemberships();
     fetchWorkout();
-  }, [params.id, router, form]);
+  }, [id, router, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSaving(true);
       console.log("Submitting form with values:", values);
 
-      const response = await fetch(`/api/admin/workouts/${params.id}`, {
+      const response = await fetch(`/api/admin/workouts/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -164,7 +165,7 @@ export default function EditWorkoutPage({
 
       if (response.ok) {
         alert("Treniruotė sėkmingai atnaujinta");
-        router.push(`/admin/turinys/sportas/treniruotes/${params.id}`);
+        router.push(`/admin/turinys/sportas/treniruotes/${id}`);
       } else {
         const error = await response.json();
         alert(error.error || "Nepavyko atnaujinti treniruotės");
@@ -192,7 +193,7 @@ export default function EditWorkoutPage({
     <div className="p-6">
       <div className="mb-6">
         <Button variant="ghost" asChild className="mb-4">
-          <Link href={`/admin/turinys/sportas/treniruotes/${params.id}`}>
+          <Link href={`/admin/turinys/sportas/treniruotes/${id}`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Grįžti į treniruotės peržiūrą
           </Link>
@@ -425,7 +426,7 @@ export default function EditWorkoutPage({
 
           <div className="flex justify-end gap-4">
             <Button variant="outline" asChild>
-              <Link href={`/admin/turinys/sportas/treniruotes/${params.id}`}>
+              <Link href={`/admin/turinys/sportas/treniruotes/${id}`}>
                 Atšaukti
               </Link>
             </Button>

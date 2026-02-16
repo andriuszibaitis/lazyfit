@@ -20,10 +20,10 @@ interface RecipeCardProps {
     title: string;
     description: string | null;
     image: string;
-    preparationTime: number;
-    cookingTime: number;
+    preparationTime: number | null;
+    cookingTime: number | null;
     servings: number;
-    difficulty: string;
+    difficulty: string | null;
     calories: number;
     protein: number;
     carbs: number;
@@ -42,7 +42,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     setIsFavorite(!isFavorite);
   };
 
-  const totalTime = recipe.preparationTime + recipe.cookingTime;
+  const totalTime = (recipe.preparationTime || 0) + (recipe.cookingTime || 0);
 
   const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
@@ -128,8 +128,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               <span>{totalTime} min</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <DifficultyIcon difficulty={recipe.difficulty} />
-              <span>{getDifficultyLabel(recipe.difficulty)}</span>
+              <DifficultyIcon difficulty={recipe.difficulty || "medium"} />
+              <span>{getDifficultyLabel(recipe.difficulty || "medium")}</span>
             </div>
           </div>
         </div>

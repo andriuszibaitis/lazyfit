@@ -543,7 +543,7 @@ export default function NutritionPlanForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="null">Nepriskirta</SelectItem>
+                              <SelectItem value="null">Visos narystės (prieinama visiems)</SelectItem>
                               {memberships.map((membership) => (
                                 <SelectItem
                                   key={membership.id}
@@ -555,8 +555,7 @@ export default function NutritionPlanForm({
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Pasirinkite narystės planą, kuriam bus prieinamas
-                            šis mitybos planas
+                            Pasirinkite &quot;Visos narystės&quot; kad planas būtų prieinamas visiems, arba konkrečią narystę
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

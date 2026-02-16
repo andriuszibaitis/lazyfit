@@ -110,7 +110,7 @@ export async function PATCH(
         icon: icon || "swimming",
         isPopular: isPopular || false,
         gender: gender || "all",
-        membershipId: membershipId || null,
+        membershipId: membershipId && membershipId !== "null" ? membershipId : null,
         imageUrl,
         videoUrl,
         isPublished: isPublished || false,

@@ -26,9 +26,10 @@ async function getEmailTemplate(id: string) {
 export default async function PreviewEmailTemplatePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const template = await getEmailTemplate(params.id);
+  const { id } = await params;
+  const template = await getEmailTemplate(id);
 
   if (!template) {
     notFound();
@@ -45,7 +46,7 @@ export default async function PreviewEmailTemplatePage({
     <div>
       <div className="mb-8">
         <Link
-          href={`/admin/emails/${params.id}`}
+          href={`/admin/emails/${id}`}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

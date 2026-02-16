@@ -53,7 +53,17 @@ export default function AddMembershipModal() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      // Auto-suggest price based on duration
+      if (name === "duration" && !prev.price) {
+        const days = parseInt(value);
+        if (days === 30) updated.price = "19.99";
+        else if (days === 90) updated.price = "49.99";
+        else if (days === 365) updated.price = "149.99";
+      }
+      return updated;
+    });
   };
 
   const handleSwitchChange = (name: string) => (checked: boolean) => {
@@ -318,6 +328,17 @@ export default function AddMembershipModal() {
                 <p className="text-xs text-gray-500">
                   Tipinės reikšmės: 30 (mėnuo), 90 (3 mėnesiai), 365 (metai)
                 </p>
+                {formData.duration && Number(formData.duration) > 0 && (
+                  <p className="text-xs text-[#60988E] font-medium">
+                    {Number(formData.duration)} dienų
+                    {Number(formData.duration) === 30 && " (1 mėnuo)"}
+                    {Number(formData.duration) === 60 && " (2 mėnesiai)"}
+                    {Number(formData.duration) === 90 && " (3 mėnesiai)"}
+                    {Number(formData.duration) === 180 && " (6 mėnesiai)"}
+                    {Number(formData.duration) === 365 && " (1 metai)"}
+                    {Number(formData.duration) === 730 && " (2 metai)"}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -339,11 +360,11 @@ export default function AddMembershipModal() {
                   name="features"
                   value={formData.features}
                   onChange={handleChange}
-                  placeholder="Kiekviena funkcija naujoje eilutėje..."
-                  rows={3}
+                  placeholder={"Pvz.:\nVisos treniruočių programos\nMitybos planai ir receptai\nKalorijų skaičiuoklė\nEdukaciniai kursai"}
+                  rows={4}
                 />
                 <p className="text-xs text-gray-500">
-                  Įveskite kiekvieną funkciją naujoje eilutėje arba JSON masyvą
+                  Narystės funkcijų sąrašas. Kiekviena eilutė = viena funkcija (rodoma kaip sąrašas vartotojui).
                 </p>
               </div>
 

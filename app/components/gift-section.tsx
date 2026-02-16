@@ -98,7 +98,7 @@ export default function GiftSection() {
                 visais reikalingais įrankiais geresnei savijautai!
               </p>
               <a
-                href="#"
+                href="/dovanu-kuponas"
                 className="bg-[#60988E] font-bold font-['mango'] italic text-white text-[28px] rounded-lg px-6 py-3 hover:bg-[#EFEFEF] hover:text-[#101827] transition shadow-md"
               >
                 Įsigyti dovanų kuponą

@@ -8,15 +8,16 @@ import NutritionChart from "../../components/nutrition-chart";
 export default async function NutritionPlanViewPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect("/auth/prisijungti?callbackUrl=/dashboard/mano-mityba");
   }
 
-  const planId = params.id;
+  const planId = id;
 
   const nutritionPlan = await prisma.nutritionPlan.findUnique({
     where: {

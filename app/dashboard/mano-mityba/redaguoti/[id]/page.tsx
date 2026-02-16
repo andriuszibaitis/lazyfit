@@ -8,20 +8,21 @@ import prisma from "@/lib/prisma";
 export default async function EditNutritionPlanPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect(
       "/auth/prisijungti?callbackUrl=/dashboard/mano-mityba/redaguoti/" +
-        params.id
+        id
     );
   }
 
   const nutritionPlan = await prisma.nutritionPlan.findUnique({
     where: {
-      id: params.id,
+      id: id,
       createdBy: session.user.id,
     },
     include: {

@@ -161,8 +161,8 @@ export async function POST(request: Request) {
           description: workout.description,
           duration: workout.duration,
           difficulty: workout.difficulty,
-          targetMuscleGroups: workout.targetMuscleGroups,
-          equipment: workout.equipment,
+          targetMuscleGroups: workout.targetMuscleGroups as any,
+          equipment: workout.equipment as any,
           imageUrl: workout.imageUrl,
           videoUrl: workout.videoUrl,
           isPublished: false,
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
         });
       }
 
-      workoutToUse = await prisma.workout.findUnique({
+      const refreshedWorkout = await prisma.workout.findUnique({
         where: {
           id: workoutCopy.id,
         },
@@ -205,6 +205,10 @@ export async function POST(request: Request) {
           },
         },
       });
+      if (!refreshedWorkout) {
+        return NextResponse.json({ error: "Failed to retrieve copied workout" }, { status: 500 });
+      }
+      workoutToUse = refreshedWorkout;
     }
 
     const programWorkout = await prisma.programWorkout.create({

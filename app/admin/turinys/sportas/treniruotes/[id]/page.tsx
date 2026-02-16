@@ -46,14 +46,15 @@ async function getExercises() {
 export default async function WorkoutDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     redirect("/auth/prisijungti");
   }
 
-  const workout = await getWorkout(params.id);
+  const workout = await getWorkout(id);
   const exercises = await getExercises();
 
   if (!workout) {
@@ -94,7 +95,7 @@ export default async function WorkoutDetailPage({
         <h1 className="text-2xl font-bold">{workout.name}</h1>
         <div className="flex gap-2">
           <Link
-            href={`/admin/turinys/sportas/treniruotes/${params.id}/edit`}
+            href={`/admin/turinys/sportas/treniruotes/${id}/edit`}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             <Edit className="w-4 h-4 mr-2" /> Redaguoti
@@ -138,15 +139,15 @@ export default async function WorkoutDetailPage({
             </div>
             <div>
               <span className="font-medium">Tikslinės raumenų grupės:</span>{" "}
-              {workout.targetMuscleGroups &&
+              {Array.isArray(workout.targetMuscleGroups) &&
               workout.targetMuscleGroups.length > 0
-                ? workout.targetMuscleGroups.join(", ")
+                ? (workout.targetMuscleGroups as string[]).join(", ")
                 : "Nenurodyta"}
             </div>
             <div>
               <span className="font-medium">Įranga:</span>{" "}
-              {workout.equipment && workout.equipment.length > 0
-                ? workout.equipment.join(", ")
+              {Array.isArray(workout.equipment) && workout.equipment.length > 0
+                ? (workout.equipment as string[]).join(", ")
                 : "Nereikalinga"}
             </div>
             <div>
@@ -166,7 +167,7 @@ export default async function WorkoutDetailPage({
                     href={`/admin/turinys/sportas/programos/${pw.programId}`}
                     className="text-blue-600 hover:underline"
                   >
-                    {pw.program.name} (Diena {pw.day}, Eilė {pw.order})
+                    {pw.program.name} (Diena {pw.dayNumber}, Eilė {pw.order})
                   </Link>
                 </li>
               ))}
@@ -293,7 +294,7 @@ export default async function WorkoutDetailPage({
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Pridėti pratimą</h2>
-        <AddExerciseToWorkout workoutId={params.id} exercises={exercises} />
+        <AddExerciseToWorkout workoutId={id} exercises={exercises} />
       </div>
     </div>
   );

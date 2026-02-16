@@ -29,7 +29,7 @@ type WorkoutExercise = {
 
 type WorkoutExercisesListProps = {
   workoutExercises: WorkoutExercise[];
-  onExerciseRemoved: () => void;
+  onExerciseRemoved?: () => void;
   programWorkoutId?: string;
 };
 
@@ -60,7 +60,7 @@ export default function WorkoutExercisesList({
       });
 
       if (response.ok) {
-        onExerciseRemoved();
+        onExerciseRemoved?.();
       } else {
         const error = await response.json();
         alert(error.error || "Nepavyko pašalinti pratimo");
@@ -182,7 +182,7 @@ export default function WorkoutExercisesList({
           isOpen={!!editingExercise}
           onClose={() => setEditingExercise(null)}
           workoutExercise={editingExercise}
-          onSave={onExerciseRemoved}
+          onSave={onExerciseRemoved ?? (() => {})}
           programWorkoutId={programWorkoutId}
         />
       )}

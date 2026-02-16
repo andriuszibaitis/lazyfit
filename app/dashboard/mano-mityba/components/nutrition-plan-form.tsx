@@ -14,12 +14,12 @@ interface FoodProduct {
   protein: number;
   carbs: number;
   fat: number;
-  fiber?: number;
-  sugar?: number;
-  serving?: number;
-  servingUnit?: string;
+  fiber?: number | null;
+  sugar?: number | null;
+  serving?: number | null;
+  servingUnit?: string | null;
   isCustom?: boolean;
-  userId?: string;
+  userId?: string | null;
 }
 
 interface MealItem {

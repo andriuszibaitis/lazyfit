@@ -151,7 +151,7 @@ export default function TrainingPage({ params }: { params: Promise<{ id: string 
     setExerciseVideoPlaying(videoPlayingStates);
   };
 
-  const toggleSection = (section: string) => {
+  const toggleSection = (section: "benefits" | "equipment" | "technique") => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],

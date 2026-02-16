@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface WeightData {
@@ -16,23 +16,96 @@ interface WeightTrackingCardProps {
   period?: string;
 }
 
+const periodMap: Record<string, string> = {
+  "Savaitė": "week",
+  "Mėnuo": "month",
+  "3 mėnesiai": "3months",
+};
+
 export default function WeightTrackingCard({
-  startWeight = 79.8,
-  currentWeight = 75.2,
-  goalWeight = 1.8,
-  weightHistory = [
-    { date: "06.25", weight: 78 },
-    { date: "06.28", weight: 77.5 },
-    { date: "07.04", weight: 76.8 },
-    { date: "07.06", weight: 76.2 },
-    { date: "07.12", weight: 75.8 },
-    { date: "07.20", weight: 75.2 },
-  ],
+  startWeight: initialStartWeight,
+  currentWeight: initialCurrentWeight,
+  goalWeight: initialGoalWeight,
+  weightHistory: initialWeightHistory,
   period = "Savaitė",
 }: WeightTrackingCardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [inputWeight, setInputWeight] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [displayStartWeight, setDisplayStartWeight] = useState(initialStartWeight || 0);
+  const [displayCurrentWeight, setDisplayCurrentWeight] = useState(initialCurrentWeight || 0);
+  const [displayGoalWeight, setDisplayGoalWeight] = useState(initialGoalWeight || 0);
+  const [displayHistory, setDisplayHistory] = useState<WeightData[]>(initialWeightHistory || []);
+
+  const fetchWeightData = useCallback(async () => {
+    try {
+      const apiPeriod = periodMap[selectedPeriod] || "week";
+      const response = await fetch(`/api/body-measurements?period=${apiPeriod}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.measurements && data.measurements.length > 0) {
+          const history: WeightData[] = data.measurements
+            .filter((m: any) => m.weight !== null)
+            .reverse()
+            .map((m: any) => {
+              const d = new Date(m.date);
+              return {
+                date: `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`,
+                weight: m.weight,
+              };
+            });
+
+          if (history.length > 0) {
+            setDisplayHistory(history);
+            setDisplayStartWeight(history[0].weight);
+            setDisplayCurrentWeight(history[history.length - 1].weight);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching weight data:", error);
+    }
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    fetchWeightData();
+  }, [fetchWeightData]);
+
+  const handleSaveWeight = async () => {
+    if (!inputWeight || isSaving) return;
+
+    const weight = parseFloat(inputWeight);
+    if (isNaN(weight) || weight <= 0) return;
+
+    setIsSaving(true);
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const response = await fetch("/api/body-measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: today.toISOString(),
+          weight,
+        }),
+      });
+
+      if (response.ok) {
+        setInputWeight("");
+        await fetchWeightData();
+      }
+    } catch (error) {
+      console.error("Error saving weight:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const weightHistory = displayHistory.length > 0
+    ? displayHistory
+    : [{ date: "-", weight: 0 }];
 
   // Calculate Y-axis values
   const weights = weightHistory.map((d) => d.weight);
@@ -40,12 +113,12 @@ export default function WeightTrackingCard({
   const dataMin = Math.min(...weights);
 
   // Round to nice values for Y-axis (add padding)
-  const yMax = Math.ceil(dataMax);
-  const yMin = Math.floor(dataMin) - 1;
-  const yRange = yMax - yMin;
+  const yMax = Math.ceil(dataMax) || 80;
+  const yMin = Math.floor(dataMin) - 1 || 70;
+  const yRange = (yMax - yMin) || 10;
 
-  // Goal line position (74 kg as example)
-  const goalLineWeight = 74;
+  // Goal line position
+  const goalLineWeight = displayGoalWeight > 0 ? displayCurrentWeight - displayGoalWeight : 0;
 
   // Convert weight to Y position (0-100 scale for SVG viewBox)
   const getY = (weight: number) => {
@@ -54,7 +127,7 @@ export default function WeightTrackingCard({
 
   // Convert index to X position (0-100 scale)
   const getX = (index: number) => {
-    return (index / (weightHistory.length - 1)) * 100;
+    return weightHistory.length > 1 ? (index / (weightHistory.length - 1)) * 100 : 50;
   };
 
   // Generate points string for polyline
@@ -64,6 +137,10 @@ export default function WeightTrackingCard({
 
   // Y-axis labels (from max to min)
   const yLabels = Array.from({ length: yRange + 1 }, (_, i) => yMax - i);
+
+  const startWeight = displayStartWeight;
+  const currentWeight = displayCurrentWeight;
+  const goalWeight = displayGoalWeight;
 
   return (
     <div className="bg-white rounded-2xl p-6 h-full flex flex-col border border-[#E6E6E6]">
@@ -219,8 +296,12 @@ export default function WeightTrackingCard({
           />
           <span className="text-[14px] text-[#555B65]">kg</span>
         </div>
-        <button className="flex-1 h-8 bg-[#60988E] text-white text-[14px] font-medium rounded-lg hover:bg-[#4d7a72] transition-colors">
-          Įvesti svorį
+        <button
+          onClick={handleSaveWeight}
+          disabled={isSaving || !inputWeight}
+          className="flex-1 h-8 bg-[#60988E] text-white text-[14px] font-medium rounded-lg hover:bg-[#4d7a72] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? "Saugoma..." : "Įvesti svorį"}
         </button>
       </div>
     </div>

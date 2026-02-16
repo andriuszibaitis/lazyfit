@@ -23,9 +23,10 @@ async function getEmailTemplate(id: string) {
 export default async function EditEmailTemplatePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const template = await getEmailTemplate(params.id);
+  const { id } = await params;
+  const template = await getEmailTemplate(id);
 
   if (!template) {
     notFound();

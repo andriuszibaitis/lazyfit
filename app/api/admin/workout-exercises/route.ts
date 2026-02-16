@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let workoutToUse = workout;
+    let workoutToUse: { id: string } = workout;
 
     if (workout.programWorkouts.length > 1 && !workout.isCopy) {
       const workoutCopy = await prisma.workout.create({
@@ -107,8 +107,8 @@ export async function POST(request: Request) {
           description: workout.description,
           duration: workout.duration,
           difficulty: workout.difficulty,
-          targetMuscleGroups: workout.targetMuscleGroups,
-          equipment: workout.equipment,
+          targetMuscleGroups: workout.targetMuscleGroups as any,
+          equipment: workout.equipment as any,
           imageUrl: workout.imageUrl,
           videoUrl: workout.videoUrl,
           isPublished: false,
@@ -283,7 +283,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    let workoutToUse = currentExercise.workout;
+    let workoutToUse: { id: string } = currentExercise.workout;
     let exerciseToUpdate = id;
 
     if (
@@ -296,8 +296,8 @@ export async function PUT(request: Request) {
           description: currentExercise.workout.description,
           duration: currentExercise.workout.duration,
           difficulty: currentExercise.workout.difficulty,
-          targetMuscleGroups: currentExercise.workout.targetMuscleGroups,
-          equipment: currentExercise.workout.equipment,
+          targetMuscleGroups: currentExercise.workout.targetMuscleGroups as any,
+          equipment: currentExercise.workout.equipment as any,
           imageUrl: currentExercise.workout.imageUrl,
           videoUrl: currentExercise.workout.videoUrl,
           isPublished: false,

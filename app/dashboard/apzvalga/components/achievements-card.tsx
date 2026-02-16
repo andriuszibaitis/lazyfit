@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -182,17 +183,58 @@ interface AchievementsCardProps {
   hasAchievements?: boolean;
 }
 
+// Map achievement codes to their SVG icons
+const achievementIconMap: Record<string, React.ReactNode> = {
+  first_steps: <LengvasStartasIcon />,
+  first_measurement: <CentimetruNaikintojasIcon />,
+  first_photo: <PusiaukeleIcon />,
+  nutrition_starter: <NestabdomasIcon />,
+  meal_tracker_7: <LedoPralauzmasIcon />,
+};
+
+const defaultAchievements: Achievement[] = [
+  { id: "1", name: "Lengvas\nstartas", icon: <LengvasStartasIcon />, completed: false },
+  { id: "2", name: "Centimetrų\nnaikintojas", icon: <CentimetruNaikintojasIcon />, completed: false },
+  { id: "3", name: "Pusiaukelė", icon: <PusiaukeleIcon />, completed: false },
+  { id: "4", name: "Nestabdo\nmas", icon: <NestabdomasIcon />, completed: false },
+  { id: "5", name: "Ledo\npralaužimas", icon: <LedoPralauzmasIcon />, completed: false },
+];
+
 export default function AchievementsCard({
   completedProgram = null,
-  achievements = [
-    { id: "1", name: "Lengvas\nstartas", icon: <LengvasStartasIcon />, completed: false },
-    { id: "2", name: "Centimetrų naikintojas", icon: <CentimetruNaikintojasIcon />, completed: false },
-    { id: "3", name: "Pusiaukelė", icon: <PusiaukeleIcon />, completed: false },
-    { id: "4", name: "Nestabdo\nmas", icon: <NestabdomasIcon />, completed: false },
-    { id: "5", name: "Ledo\npralaužimas", icon: <LedoPralauzmasIcon />, completed: false },
-  ],
-  hasAchievements = false,
+  achievements: initialAchievements = defaultAchievements,
+  hasAchievements: initialHasAchievements = false,
 }: AchievementsCardProps) {
+  const [hasAchievements, setHasAchievements] = useState(initialHasAchievements);
+  const [achievements, setAchievements] = useState(initialAchievements);
+
+  useEffect(() => {
+    // Check and award achievements
+    fetch("/api/achievements/check", { method: "POST" })
+      .then(() => {
+        // After checking, fetch achievement data
+        return fetch("/api/achievements");
+      })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.achievements && data.achievements.length > 0) {
+          const unlocked = data.achievements.filter((a: any) => a.isUnlocked);
+          if (unlocked.length > 0) {
+            setHasAchievements(true);
+          }
+
+          // Map DB achievements to UI format (show first 5)
+          const mapped: Achievement[] = data.achievements.slice(0, 5).map((a: any) => ({
+            id: a.id,
+            name: a.title,
+            icon: achievementIconMap[a.code] || <LengvasStartasIcon />,
+            completed: a.isUnlocked,
+          }));
+          setAchievements(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
   // Empty state - no achievements yet
   if (!hasAchievements) {
     return (

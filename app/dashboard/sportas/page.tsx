@@ -46,6 +46,7 @@ export default async function DashboardPage() {
       id: workout.id,
       title: workout.name,
       image: workout.imageUrl || getServerThumbnail(workout.videoUrl),
+      videoUrl: workout.videoUrl || "",
       duration: workout.duration || 15,
       level: workout.difficulty || "Pradedantiesiems",
       isFavorite: false,
