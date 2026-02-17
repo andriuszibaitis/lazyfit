@@ -1,8 +1,12 @@
 interface FoodProduct {
+  id: string;
+  name: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number | null;
+  sugar: number | null;
 }
 
 interface MealItem {

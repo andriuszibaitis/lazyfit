@@ -22,7 +22,7 @@ export default async function EditNutritionPlanPage({
 
   const nutritionPlan = await prisma.nutritionPlan.findUnique({
     where: {
-      id: id,
+      id,
       createdBy: session.user.id,
     },
     include: {

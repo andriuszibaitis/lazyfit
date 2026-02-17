@@ -41,13 +41,76 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Program {
+  id: string;
+  name: string;
+  description?: string;
+  difficulty?: string;
+  duration?: number;
+  isPublished: boolean;
+}
+
+interface Workout {
+  id: string;
+  name: string;
+  description?: string;
+  difficulty?: string;
+  duration?: number;
+  isPublished: boolean;
+  workoutExercises?: { id: string }[];
+}
+
+interface Exercise {
+  id: string;
+  name: string;
+  description?: string;
+  muscleGroup?: string;
+  difficulty?: string;
+  equipment?: string;
+  isPublished: boolean;
+}
+
+const muscleGroupLabels: Record<string, string> = {
+  chest: "Krūtinė",
+  back: "Nugara",
+  shoulders: "Pečiai",
+  biceps: "Bicepsai",
+  triceps: "Tricepsai",
+  forearms: "Dilbiai",
+  abs: "Pilvo presas",
+  quads: "Keturgalvis",
+  hamstrings: "Dvigalvis",
+  calves: "Blauzdos",
+  glutes: "Sėdmenys",
+  cardio: "Kardio",
+  full_body: "Visas kūnas",
+  arms: "Rankos",
+  legs: "Kojos",
+  core: "Korpusas",
+  fullBody: "Visas kūnas",
+};
+
+const equipmentLabels: Record<string, string> = {
+  bodyweight: "Kūno svoris",
+  dumbbells: "Hanteliai",
+  barbell: "Štanga",
+  kettlebell: "Girija",
+  resistance_bands: "Pasipriešinimo gumos",
+  cable_machine: "Trosas",
+  smith_machine: "Smith mašina",
+  bench: "Suoliukas",
+  pull_up_bar: "Skersinis",
+  medicine_ball: "Medicininis kamuolys",
+  bosu_ball: "Bosu kamuolys",
+};
+
 export default function SportsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("programs");
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [workouts, setWorkouts] = useState<any[]>([]);
-  const [exercises, setExercises] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -203,7 +266,7 @@ export default function SportsPage() {
         exercise.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getDifficultyLabel = (difficulty: string) => {
+  const getDifficultyLabel = (difficulty?: string) => {
     switch (difficulty) {
       case "easy":
         return "Lengvas";
@@ -213,54 +276,18 @@ export default function SportsPage() {
       case "advanced":
         return "Sunkus";
       default:
-        return difficulty;
+        return difficulty || "-";
     }
   };
 
-  const getMuscleGroupLabel = (muscleGroup: string) => {
+  const getMuscleGroupLabel = (muscleGroup?: string) => {
     if (!muscleGroup) return "Neapibrėžta";
-
-    const muscleGroups: Record<string, string> = {
-      chest: "Krūtinė",
-      back: "Nugara",
-      shoulders: "Pečiai",
-      biceps: "Bicepsai",
-      triceps: "Tricepsai",
-      forearms: "Dilbiai",
-      abs: "Pilvo presas",
-      quads: "Keturgalvis",
-      hamstrings: "Dvigalvis",
-      calves: "Blauzdos",
-      glutes: "Sėdmenys",
-      cardio: "Kardio",
-      full_body: "Visas kūnas",
-      arms: "Rankos",
-      legs: "Kojos",
-      core: "Korpusas",
-      fullBody: "Visas kūnas",
-    };
-
-    return muscleGroups[muscleGroup] || muscleGroup;
+    return muscleGroupLabels[muscleGroup] || muscleGroup;
   };
 
-  const getEquipmentLabel = (equipment: string) => {
+  const getEquipmentLabel = (equipment?: string) => {
     if (!equipment) return "Nereikia įrangos";
-
-    const equipmentTypes: Record<string, string> = {
-      bodyweight: "Kūno svoris",
-      dumbbells: "Hanteliai",
-      barbell: "Štanga",
-      kettlebell: "Girija",
-      resistance_bands: "Pasipriešinimo gumos",
-      cable_machine: "Trosas",
-      smith_machine: "Smith mašina",
-      bench: "Suoliukas",
-      pull_up_bar: "Skersinis",
-      medicine_ball: "Medicininis kamuolys",
-      bosu_ball: "Bosu kamuolys",
-    };
-
-    return equipmentTypes[equipment] || equipment;
+    return equipmentLabels[equipment] || equipment;
   };
 
   return (

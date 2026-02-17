@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    domains: ["localhost", "lh3.googleusercontent.com"],
     remotePatterns: [
       {
         protocol: "https",

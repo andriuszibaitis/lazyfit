@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth-options";
 
@@ -164,8 +165,8 @@ export async function DELETE(
           description: workoutExercise.workout.description,
           duration: workoutExercise.workout.duration,
           difficulty: workoutExercise.workout.difficulty,
-          targetMuscleGroups: workoutExercise.workout.targetMuscleGroups as any,
-          equipment: workoutExercise.workout.equipment as any,
+          targetMuscleGroups: workoutExercise.workout.targetMuscleGroups as Prisma.InputJsonValue ?? undefined,
+          equipment: workoutExercise.workout.equipment as Prisma.InputJsonValue ?? undefined,
           imageUrl: workoutExercise.workout.imageUrl,
           videoUrl: workoutExercise.workout.videoUrl,
           isPublished: false,

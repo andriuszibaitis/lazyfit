@@ -14,8 +14,8 @@ interface FoodProduct {
   protein: number;
   carbs: number;
   fat: number;
-  fiber?: number | null;
-  sugar?: number | null;
+  fiber: number | null;
+  sugar: number | null;
   serving?: number | null;
   servingUnit?: string | null;
   isCustom?: boolean;

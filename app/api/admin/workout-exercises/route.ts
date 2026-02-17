@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth-options";
 
@@ -107,8 +108,8 @@ export async function POST(request: Request) {
           description: workout.description,
           duration: workout.duration,
           difficulty: workout.difficulty,
-          targetMuscleGroups: workout.targetMuscleGroups as any,
-          equipment: workout.equipment as any,
+          targetMuscleGroups: workout.targetMuscleGroups as Prisma.InputJsonValue ?? undefined,
+          equipment: workout.equipment as Prisma.InputJsonValue ?? undefined,
           imageUrl: workout.imageUrl,
           videoUrl: workout.videoUrl,
           isPublished: false,
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
         });
       }
 
-      workoutToUse = workoutCopy;
+      workoutToUse = { ...workoutCopy, programWorkouts: [] };
     }
 
     const parsedSupersetOrder = supersetOrder
@@ -296,8 +297,8 @@ export async function PUT(request: Request) {
           description: currentExercise.workout.description,
           duration: currentExercise.workout.duration,
           difficulty: currentExercise.workout.difficulty,
-          targetMuscleGroups: currentExercise.workout.targetMuscleGroups as any,
-          equipment: currentExercise.workout.equipment as any,
+          targetMuscleGroups: currentExercise.workout.targetMuscleGroups as Prisma.InputJsonValue ?? undefined,
+          equipment: currentExercise.workout.equipment as Prisma.InputJsonValue ?? undefined,
           imageUrl: currentExercise.workout.imageUrl,
           videoUrl: currentExercise.workout.videoUrl,
           isPublished: false,
@@ -347,7 +348,7 @@ export async function PUT(request: Request) {
         });
       }
 
-      workoutToUse = workoutCopy;
+      workoutToUse = { ...workoutCopy, programWorkouts: [] };
     }
 
     const parsedSets = sets

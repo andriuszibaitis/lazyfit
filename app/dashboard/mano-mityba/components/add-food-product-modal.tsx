@@ -28,6 +28,8 @@ interface FoodProduct {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number | null;
+  sugar: number | null;
   isUserCreated?: boolean;
 }
 

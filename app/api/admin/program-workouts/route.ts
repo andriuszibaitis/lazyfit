@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth-options";
 
@@ -161,8 +162,8 @@ export async function POST(request: Request) {
           description: workout.description,
           duration: workout.duration,
           difficulty: workout.difficulty,
-          targetMuscleGroups: workout.targetMuscleGroups as any,
-          equipment: workout.equipment as any,
+          targetMuscleGroups: workout.targetMuscleGroups as Prisma.InputJsonValue ?? undefined,
+          equipment: workout.equipment as Prisma.InputJsonValue ?? undefined,
           imageUrl: workout.imageUrl,
           videoUrl: workout.videoUrl,
           isPublished: false,
@@ -190,7 +191,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const refreshedWorkout = await prisma.workout.findUnique({
+      const copiedWorkout = await prisma.workout.findUnique({
         where: {
           id: workoutCopy.id,
         },
@@ -205,10 +206,15 @@ export async function POST(request: Request) {
           },
         },
       });
-      if (!refreshedWorkout) {
-        return NextResponse.json({ error: "Failed to retrieve copied workout" }, { status: 500 });
+
+      if (!copiedWorkout) {
+        return NextResponse.json(
+          { error: "Failed to retrieve copied workout" },
+          { status: 500 }
+        );
       }
-      workoutToUse = refreshedWorkout;
+
+      workoutToUse = copiedWorkout;
     }
 
     const programWorkout = await prisma.programWorkout.create({
