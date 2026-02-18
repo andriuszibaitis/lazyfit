@@ -152,7 +152,7 @@ export async function POST(request: Request) {
         });
       }
 
-      workoutToUse = { ...workoutCopy, programWorkouts: [] };
+      workoutToUse = { id: workoutCopy.id };
     }
 
     const parsedSupersetOrder = supersetOrder
@@ -348,7 +348,7 @@ export async function PUT(request: Request) {
         });
       }
 
-      workoutToUse = { ...workoutCopy, programWorkouts: [] };
+      workoutToUse = { id: workoutCopy.id };
     }
 
     const parsedSets = sets
