@@ -870,31 +870,23 @@ export default function ProgramDetailPage({
                                             <CollapsibleContent>
                                               <div className="p-4">
                                                 <div className="space-y-4">
-                                                  {Object.entries(
-                                                    workoutsByPeriodWeekAndDay
-                                                  ).flatMap(
-                                                    ([periodId, weekData]) => {
-                                                      if (!weekData[weekNumber])
-                                                        return [];
+                                                  {(() => {
+                                                    const weekData = workoutsByPeriodWeekAndDay[period.id]?.[weekNumber] || {};
+                                                    const days = Object.keys(weekData)
+                                                      .map(Number)
+                                                      .sort((a, b) => a - b);
 
-                                                      const days = Object.keys(
-                                                        weekData[weekNumber]
-                                                      )
-                                                        .map(Number)
-                                                        .sort((a, b) => a - b);
+                                                    const allDays = Array.from(
+                                                      { length: 7 },
+                                                      (_, i) => i + 1
+                                                    );
 
-                                                      const allDays =
-                                                        Array.from(
-                                                          { length: 7 },
-                                                          (_, i) => i + 1
-                                                        );
-
-                                                      return allDays.map(
-                                                        (dayNumber) => {
-                                                          const hasWorkoutsForDay =
-                                                            days.includes(
-                                                              dayNumber
-                                                            );
+                                                    return allDays.map(
+                                                      (dayNumber) => {
+                                                        const hasWorkoutsForDay =
+                                                          days.includes(
+                                                            dayNumber
+                                                          );
 
                                                           return (
                                                             <div
@@ -988,9 +980,7 @@ export default function ProgramDetailPage({
 
                                                               <div className="space-y-2">
                                                                 {hasWorkoutsForDay ? (
-                                                                  weekData[
-                                                                    weekNumber
-                                                                  ][dayNumber]
+                                                                  weekData[dayNumber]
                                                                     .sort(
                                                                       (a, b) =>
                                                                         a.order -
@@ -1157,8 +1147,7 @@ export default function ProgramDetailPage({
                                                           );
                                                         }
                                                       );
-                                                    }
-                                                  )}
+                                                  })()}
                                                 </div>
                                               </div>
                                             </CollapsibleContent>

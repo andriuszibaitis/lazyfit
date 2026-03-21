@@ -289,7 +289,14 @@ export default function MealTrackingContent({ plan, userWeight }: MealTrackingCo
 
       if (response.ok) {
         const newMeal = await response.json();
-        setMealLogs((prev) => [...prev, newMeal]);
+        setMealLogs((prev) => [...prev, {
+          ...newMeal,
+          items: newMeal.items || [],
+          totalCalories: newMeal.totalCalories || 0,
+          totalProtein: newMeal.totalProtein || 0,
+          totalCarbs: newMeal.totalCarbs || 0,
+          totalFat: newMeal.totalFat || 0,
+        }]);
         setNewMealName(null);
       }
     } catch (error) {

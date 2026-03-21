@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 
 type Workout = {
   id: string;
@@ -57,9 +57,10 @@ export function AddWorkoutToProgram({
   const [applyToAllWeeks, setApplyToAllWeeks] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<Period | null>(null);
   const [weekNumber, setWeekNumber] = useState("1");
+  const [workoutSearch, setWorkoutSearch] = useState("");
 
   useEffect(() => {
-    if (periodId) {
+    if (periodId && periodId !== "no_period") {
       const period = periods.find((p) => p.id === periodId);
       if (period) {
         setSelectedPeriod(period);
@@ -128,7 +129,7 @@ export function AddWorkoutToProgram({
           );
         }
       } else {
-        const weekToUse = periodId && selectedPeriod ? Number(weekNumber) : 1;
+        const weekToUse = periodId && periodId !== "no_period" && selectedPeriod ? Number(weekNumber) : 1;
 
         const response = await fetch("/api/admin/program-workouts", {
           method: "POST",
@@ -137,7 +138,7 @@ export function AddWorkoutToProgram({
           },
           body: JSON.stringify({
             programId,
-            periodId: periodId || null,
+            periodId: periodId && periodId !== "no_period" ? periodId : null,
             workoutId,
             weekNumber: weekToUse,
             dayNumber: Number(dayNumber),
@@ -166,7 +167,9 @@ export function AddWorkoutToProgram({
     }
   };
 
-  const availableWorkouts = workouts.filter((workout) => workout.isPublished);
+  const filteredWorkouts = workouts.filter((workout) =>
+    workout.name.toLowerCase().includes(workoutSearch.toLowerCase())
+  );
 
   return (
     <Card className="border-dashed">
@@ -179,19 +182,33 @@ export function AddWorkoutToProgram({
                 <SelectValue placeholder="Pasirinkite treniruotę" />
               </SelectTrigger>
               <SelectContent>
-                {availableWorkouts.length > 0 ? (
-                  availableWorkouts.map((workout) => (
+                <div className="px-2 pb-2">
+                  <div className="flex items-center border rounded-md px-2">
+                    <Search className="h-4 w-4 text-gray-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Ieškoti treniruotės..."
+                      value={workoutSearch}
+                      onChange={(e) => setWorkoutSearch(e.target.value)}
+                      className="w-full px-2 py-1.5 text-sm outline-none"
+                      onKeyDown={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+                {filteredWorkouts.length > 0 ? (
+                  filteredWorkouts.map((workout) => (
                     <SelectItem key={workout.id} value={workout.id}>
                       {workout.name}{" "}
                       {workout.difficulty === "easy" && "(Lengva)"}
                       {workout.difficulty === "medium" && "(Vidutinė)"}
                       {workout.difficulty === "hard" && "(Sunki)"}
                       {workout.duration && ` - ${workout.duration} min.`}
+                      {!workout.isPublished && " [Nepublikuota]"}
                     </SelectItem>
                   ))
                 ) : (
                   <SelectItem value="none" disabled>
-                    Nėra publikuotų treniruočių
+                    Treniruočių nerasta
                   </SelectItem>
                 )}
               </SelectContent>
@@ -215,7 +232,7 @@ export function AddWorkoutToProgram({
             </Select>
           </div>
 
-          {periodId && selectedPeriod && (
+          {periodId && periodId !== "no_period" && selectedPeriod && (
             <>
               <div className="flex items-center space-x-2">
                 <Checkbox

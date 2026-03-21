@@ -3,8 +3,9 @@ import { authOptions } from "@/app/lib/auth-options";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import AddExerciseToWorkout from "./components/add-exercise-to-workout";
+import DeleteExerciseButton from "./components/delete-exercise-button";
 
 async function getWorkout(id: string) {
   try {
@@ -71,23 +72,47 @@ export default async function WorkoutDetailPage({
     );
   }
 
-  const groupedExercises: Record<string, any[]> = {};
+  // Build ordered list: interleave regular exercises and superset groups by order
+  type ListItem =
+    | { type: "regular"; exercises: any[]; order: number }
+    | { type: "superset"; group: string; exercises: any[]; order: number };
 
-  workout.workoutExercises.forEach((we) => {
-    const key = we.supersetGroup || "regular";
-    if (!groupedExercises[key]) {
-      groupedExercises[key] = [];
+  const supersetGroups: Record<string, any[]> = {};
+  const orderedItems: ListItem[] = [];
+  const seenGroups = new Set<string>();
+
+  const sortedExercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order);
+
+  sortedExercises.forEach((we) => {
+    if (we.supersetGroup) {
+      if (!supersetGroups[we.supersetGroup]) {
+        supersetGroups[we.supersetGroup] = [];
+      }
+      supersetGroups[we.supersetGroup].push(we);
     }
-    groupedExercises[key].push(we);
   });
 
-  Object.keys(groupedExercises).forEach((key) => {
-    if (key !== "regular") {
-      groupedExercises[key].sort(
-        (a, b) => (a.supersetOrder || 0) - (b.supersetOrder || 0)
-      );
+  Object.values(supersetGroups).forEach((group) => {
+    group.sort((a: any, b: any) => (a.supersetOrder || 0) - (b.supersetOrder || 0));
+  });
+
+  sortedExercises.forEach((we) => {
+    if (!we.supersetGroup) {
+      orderedItems.push({ type: "regular", exercises: [we], order: we.order });
+    } else if (!seenGroups.has(we.supersetGroup)) {
+      seenGroups.add(we.supersetGroup);
+      const groupExercises = supersetGroups[we.supersetGroup];
+      const minOrder = Math.min(...groupExercises.map((e: any) => e.order));
+      orderedItems.push({
+        type: "superset",
+        group: we.supersetGroup,
+        exercises: groupExercises,
+        order: minOrder,
+      });
     }
   });
+
+  orderedItems.sort((a, b) => a.order - b.order);
 
   return (
     <div className="p-6">
@@ -185,20 +210,20 @@ export default async function WorkoutDetailPage({
           <h2 className="text-xl font-semibold">Pratimai</h2>
         </div>
 
-        {Object.keys(groupedExercises).length > 0 ? (
+        {orderedItems.length > 0 ? (
           <div className="space-y-6">
-            {Object.keys(groupedExercises).map((key) => (
+            {orderedItems.map((item, idx) => (
               <div
-                key={key}
+                key={item.type === "superset" ? `superset-${item.group}` : `regular-${idx}`}
                 className={`${
-                  key !== "regular"
+                  item.type === "superset"
                     ? "border p-4 rounded-md border-blue-200 bg-blue-50"
                     : ""
                 }`}
               >
-                {key !== "regular" && (
+                {item.type === "superset" && (
                   <h3 className="text-lg font-medium mb-3">
-                    Superserija: {key}
+                    Superserija: {item.group}
                   </h3>
                 )}
                 <div className="overflow-x-auto">
@@ -208,7 +233,7 @@ export default async function WorkoutDetailPage({
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Eilė
                         </th>
-                        {key !== "regular" && (
+                        {item.type === "superset" && (
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Superserijos eilė
                           </th>
@@ -237,12 +262,12 @@ export default async function WorkoutDetailPage({
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {groupedExercises[key].map((we) => (
+                      {item.exercises.map((we: any) => (
                         <tr key={we.id}>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {we.order}
                           </td>
-                          {key !== "regular" && (
+                          {item.type === "superset" && (
                             <td className="px-4 py-3 whitespace-nowrap">
                               {we.supersetOrder}
                             </td>
@@ -266,18 +291,7 @@ export default async function WorkoutDetailPage({
                             {we.notes || "-"}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <form
-                              action={`/api/admin/workout-exercises/${we.id}`}
-                              method="DELETE"
-                            >
-                              <button
-                                type="submit"
-                                className="text-red-600 hover:text-red-800"
-                                title="Pašalinti pratimą"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </form>
+                            <DeleteExerciseButton workoutExerciseId={we.id} />
                           </td>
                         </tr>
                       ))}

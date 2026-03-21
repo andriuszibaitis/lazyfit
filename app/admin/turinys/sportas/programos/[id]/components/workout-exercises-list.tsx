@@ -71,42 +71,100 @@ export default function WorkoutExercisesList({
     }
   };
 
-  const groupedExercises: Record<string, WorkoutExercise[]> = {};
+  // Build ordered list: interleave regular exercises and superset groups by order
+  type ListItem =
+    | { type: "regular"; exercise: WorkoutExercise; order: number }
+    | { type: "superset"; group: string; exercises: WorkoutExercise[]; order: number };
 
-  const nonSupersetExercises = workoutExercises.filter(
-    (ex) => !ex.supersetGroup
-  );
+  const supersetGroups: Record<string, WorkoutExercise[]> = {};
+  const items: ListItem[] = [];
+  const seenGroups = new Set<string>();
 
-  const supersetExercises = workoutExercises.filter((ex) => ex.supersetGroup);
+  // Sort all exercises by order first
+  const sorted = [...workoutExercises].sort((a, b) => a.order - b.order);
 
-  supersetExercises.forEach((ex) => {
-    const key = ex.supersetGroup || "none";
-    if (!groupedExercises[key]) {
-      groupedExercises[key] = [];
+  // Group superset exercises
+  sorted.forEach((ex) => {
+    if (ex.supersetGroup) {
+      if (!supersetGroups[ex.supersetGroup]) {
+        supersetGroups[ex.supersetGroup] = [];
+      }
+      supersetGroups[ex.supersetGroup].push(ex);
     }
-    groupedExercises[key].push(ex);
   });
 
-  Object.keys(groupedExercises).forEach((key) => {
-    groupedExercises[key].sort((a, b) => {
-      return (a.supersetOrder || 0) - (b.supersetOrder || 0);
-    });
+  // Sort within each superset group by supersetOrder
+  Object.values(supersetGroups).forEach((group) => {
+    group.sort((a, b) => (a.supersetOrder || 0) - (b.supersetOrder || 0));
   });
+
+  // Build interleaved list
+  sorted.forEach((ex) => {
+    if (!ex.supersetGroup) {
+      items.push({ type: "regular", exercise: ex, order: ex.order });
+    } else if (!seenGroups.has(ex.supersetGroup)) {
+      seenGroups.add(ex.supersetGroup);
+      const groupExercises = supersetGroups[ex.supersetGroup];
+      const minOrder = Math.min(...groupExercises.map((e) => e.order));
+      items.push({
+        type: "superset",
+        group: ex.supersetGroup,
+        exercises: groupExercises,
+        order: minOrder,
+      });
+    }
+  });
+
+  items.sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-4">
-      {}
-      {nonSupersetExercises.length > 0 && (
-        <div className="space-y-2">
-          {nonSupersetExercises
-            .sort((a, b) => a.order - b.order)
-            .map((exercise) => (
+      {items.map((item) =>
+        item.type === "regular" ? (
+          <div
+            key={item.exercise.id}
+            className="flex justify-between items-center p-2 bg-gray-50 rounded"
+          >
+            <div>
+              <p className="font-medium">{item.exercise.exercise.name}</p>
+              <p className="text-xs text-gray-500">
+                {item.exercise.sets && `${item.exercise.sets} serijos`}
+                {item.exercise.reps && ` • ${item.exercise.reps} pakartojimai`}
+                {item.exercise.restTime && ` • ${item.exercise.restTime}s poilsis`}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingExercise(item.exercise)}
+              >
+                <Pencil className="h-4 w-4 text-gray-500" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveExercise(item.exercise.id)}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div key={`superset-${item.group}`} className="border-l-2 border-blue-500 pl-3 space-y-2">
+            <h4 className="text-sm font-medium">
+              Superserija {item.group.toUpperCase()}
+            </h4>
+            {item.exercises.map((exercise) => (
               <div
                 key={exercise.id}
                 className="flex justify-between items-center p-2 bg-gray-50 rounded"
               >
                 <div>
-                  <p className="font-medium">{exercise.exercise.name}</p>
+                  <p className="font-medium">
+                    {item.group.toUpperCase()}
+                    {exercise.supersetOrder}: {exercise.exercise.name}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {exercise.sets && `${exercise.sets} serijos`}
                     {exercise.reps && ` • ${exercise.reps} pakartojimai`}
@@ -131,51 +189,9 @@ export default function WorkoutExercisesList({
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        )
       )}
-
-      {}
-      {Object.keys(groupedExercises).map((group) => (
-        <div key={group} className="border-l-2 border-blue-500 pl-3 space-y-2">
-          <h4 className="text-sm font-medium">
-            Superserija {group.toUpperCase()}
-          </h4>
-          {groupedExercises[group].map((exercise) => (
-            <div
-              key={exercise.id}
-              className="flex justify-between items-center p-2 bg-gray-50 rounded"
-            >
-              <div>
-                <p className="font-medium">
-                  {group.toUpperCase()}
-                  {exercise.supersetOrder}: {exercise.exercise.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {exercise.sets && `${exercise.sets} serijos`}
-                  {exercise.reps && ` • ${exercise.reps} pakartojimai`}
-                  {exercise.restTime && ` • ${exercise.restTime}s poilsis`}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingExercise(exercise)}
-                >
-                  <Pencil className="h-4 w-4 text-gray-500" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveExercise(exercise.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
 
       {editingExercise && (
         <EditExerciseModal

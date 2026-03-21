@@ -108,14 +108,18 @@ export default function WeightTrackingCard({
     : [{ date: "-", weight: 0 }];
 
   // Calculate Y-axis values
-  const weights = weightHistory.map((d) => d.weight);
-  const dataMax = Math.max(...weights);
-  const dataMin = Math.min(...weights);
+  const hasData = displayHistory.length > 0;
+  const weights = weightHistory.map((d) => d.weight).filter((w) => w > 0);
+  const dataMax = weights.length > 0 ? Math.max(...weights) : 80;
+  const dataMin = weights.length > 0 ? Math.min(...weights) : 70;
 
   // Round to nice values for Y-axis (add padding)
-  const yMax = Math.ceil(dataMax) || 80;
-  const yMin = Math.floor(dataMin) - 1 || 70;
-  const yRange = (yMax - yMin) || 10;
+  const yMax = Math.ceil(dataMax) + 1;
+  const yMin = Math.max(0, Math.floor(dataMin) - 1);
+  const rawRange = yMax - yMin;
+  // Limit to max ~10 labels by using a step
+  const step = rawRange > 10 ? Math.ceil(rawRange / 10) : 1;
+  const yRange = rawRange || 10;
 
   // Goal line position
   const goalLineWeight = displayGoalWeight > 0 ? displayCurrentWeight - displayGoalWeight : 0;
@@ -135,8 +139,11 @@ export default function WeightTrackingCard({
     .map((d, i) => `${getX(i)},${getY(d.weight)}`)
     .join(" ");
 
-  // Y-axis labels (from max to min)
-  const yLabels = Array.from({ length: yRange + 1 }, (_, i) => yMax - i);
+  // Y-axis labels (from max to min, with step)
+  const yLabels: number[] = [];
+  for (let v = yMax; v >= yMin; v -= step) {
+    yLabels.push(v);
+  }
 
   const startWeight = displayStartWeight;
   const currentWeight = displayCurrentWeight;

@@ -91,6 +91,9 @@ export async function POST(request: Request) {
           mealName,
         },
       },
+      include: {
+        items: true,
+      },
     });
 
     if (existingLog) {

@@ -42,6 +42,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]),
   duration: z.number().min(1).optional(),
+  intensity: z.string().optional(),
   equipment: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
@@ -70,6 +71,7 @@ export default function EditWorkoutPage({
       description: "",
       difficulty: "medium",
       duration: undefined,
+      intensity: "",
       equipment: "",
       imageUrl: "",
       videoUrl: "",
@@ -119,6 +121,7 @@ export default function EditWorkoutPage({
             description: workout.description || "",
             difficulty: workout.difficulty || "medium",
             duration: workout.duration || undefined,
+            intensity: workout.intensity || "",
             equipment: Array.isArray(workout.equipment)
               ? workout.equipment.join(", ")
               : "",
@@ -281,6 +284,26 @@ export default function EditWorkoutPage({
                       </FormControl>
                       <FormDescription>
                         Kiek minučių trunka treniruotė
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="intensity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Intensyvumas</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Pvz.: 500 Kcal, Aukštas, Vidutinis"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Treniruotės intensyvumas (pvz. kalorijų kiekis arba lygis)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -359,8 +359,9 @@ model Workout {
   name              String
   description       String?  @db.Text
   duration          Int?     
-  difficulty        String   @default("medium") 
-  targetMuscleGroups Json?    
+  difficulty        String   @default("medium")
+  intensity         String?
+  targetMuscleGroups Json?
   equipment         Json?    
   imageUrl          String?  @db.Text
   videoUrl          String?  @db.Text

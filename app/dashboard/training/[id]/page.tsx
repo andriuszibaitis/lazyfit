@@ -48,6 +48,7 @@ interface Workout {
   description?: string | null;
   duration?: number | null;
   difficulty: string;
+  intensity?: string | null;
   targetMuscleGroups?: any;
   equipment?: any;
   imageUrl?: string | null;
@@ -571,7 +572,7 @@ export default function TrainingPage({ params }: { params: Promise<{ id: string 
                     Intensyvumas
                   </p>
                   <div className="flex items-center">
-                    <span className="font-medium">1000 Kcal</span>
+                    <span className="font-medium">{workout.intensity || "-"}</span>
                   </div>
                 </div>
                 <div>
