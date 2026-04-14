@@ -23,6 +23,7 @@ import {
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -47,6 +48,27 @@ interface FoodProduct {
   serving: number;
   servingUnit: string;
   isActive: boolean;
+}
+
+function getPageItems(
+  current: number,
+  total: number
+): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const items: (number | "ellipsis")[] = [1];
+
+  const left = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+
+  if (left > 2) items.push("ellipsis");
+  for (let p = left; p <= right; p++) items.push(p);
+  if (right < total - 1) items.push("ellipsis");
+
+  items.push(total);
+  return items;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -239,7 +261,7 @@ export default function FoodProductsList() {
       ) : (
         <>
           {}
-          <div className="hidden md:block overflow-hidden rounded-lg border border-gray-200">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
@@ -375,24 +397,33 @@ export default function FoodProductsList() {
           {totalPages > 1 && (
             <div className="mt-6 flex justify-center">
               <Pagination>
-                <PaginationContent>
+                <PaginationContent className="flex-wrap">
                   <PaginationItem>
                     <PaginationPrevious
                       onClick={() =>
                         currentPage > 1 && handlePageChange(currentPage - 1)
                       }
                       aria-disabled={currentPage === 1}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <PaginationItem key={page}>
+                  {getPageItems(currentPage, totalPages).map((item, idx) =>
+                    item === "ellipsis" ? (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
                         <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={page === currentPage}
+                          onClick={() => handlePageChange(item)}
+                          isActive={item === currentPage}
+                          className="cursor-pointer"
                         >
-                          {page}
+                          {item}
                         </PaginationLink>
                       </PaginationItem>
                     )
@@ -400,10 +431,15 @@ export default function FoodProductsList() {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() =>
-                        currentPage < totalPages && handlePageChange(currentPage + 1)
+                        currentPage < totalPages &&
+                        handlePageChange(currentPage + 1)
                       }
                       aria-disabled={currentPage === totalPages}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>

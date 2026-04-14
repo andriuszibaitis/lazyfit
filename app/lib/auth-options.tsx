@@ -19,8 +19,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Trūksta prisijungimo duomenų");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Search by primary email or linked email
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: credentials.email },
+              { linkedEmail: credentials.email },
+            ],
+          },
         });
 
         if (!user || !user.hashedPassword) {
@@ -125,25 +131,50 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }) {
       if (account?.provider === "google") {
+        const googleEmail = user.email as string;
+
+        // Check if a user exists with this Google email as primary
         const existingUser = await prisma.user.findUnique({
-          where: { email: user.email as string },
+          where: { email: googleEmail },
         });
 
         if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              email: user.email as string,
-              name: user.name as string,
-              image: user.image as string | undefined,
-              role: "user",
-              hashedPassword: null,
-              provider: account.provider,
-            },
+          // Check if a credentials user has this email as linkedEmail
+          const linkedUser = await prisma.user.findFirst({
+            where: { linkedEmail: googleEmail },
           });
-        } else if (!existingUser.provider) {
+
+          if (linkedUser) {
+            // Credentials user linked this Google email — update provider info
+            await prisma.user.update({
+              where: { id: linkedUser.id },
+              data: {
+                image: user.image as string | undefined,
+              },
+            });
+          } else {
+            // Brand new user
+            await prisma.user.create({
+              data: {
+                email: googleEmail,
+                name: user.name as string,
+                image: user.image as string | undefined,
+                role: "user",
+                hashedPassword: null,
+                provider: account.provider,
+              },
+            });
+          }
+        } else if (existingUser.provider === "credentials") {
+          // Credentials user signing in with Google — link Google to existing account
           await prisma.user.update({
-            where: { email: user.email as string },
-            data: { provider: account.provider },
+            where: { id: existingUser.id },
+            data: {
+              provider: "google",
+              linkedEmail: existingUser.email,
+              email: googleEmail,
+              image: user.image as string | undefined,
+            },
           });
         }
       }

@@ -130,20 +130,61 @@ export default function IvestiApimtisPage() {
     );
   }
 
+  const tipsContent = (
+    <>
+      <h3
+        className="text-[15px] md:text-[16px] font-semibold text-[#101827] mb-2 md:mb-3"
+        style={{ fontFamily: "Outfit, sans-serif" }}
+      >
+        Kaip matuoti?
+      </h3>
+      <ul className="space-y-1 md:space-y-2 text-[12px] md:text-[13px] text-[#555B65]" style={{ fontFamily: "Outfit, sans-serif" }}>
+        <li className="flex gap-2">
+          <span>•</span>
+          <span>Matuoti visada ta pačia ranka / koja (pvz., dešine)</span>
+        </li>
+        <li className="flex gap-2">
+          <span>•</span>
+          <span>Naudoti minkštą siuvėjo metrą</span>
+        </li>
+        <li className="flex gap-2">
+          <span>•</span>
+          <span>Matuoti 1x per savaitę, ryte</span>
+        </li>
+        <li className="flex gap-2">
+          <span>•</span>
+          <span>Fiksuoti sistemoj per „Matavimų" skiltį</span>
+        </li>
+      </ul>
+    </>
+  );
+
   return (
-    <div className="flex-1 p-6 bg-[#F5F5F5]">
+    <div className="flex-1 p-4 md:p-6 bg-[#F5F5F5]">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl p-8">
+        <div className="bg-white rounded-2xl p-4 md:p-8 border border-[#E6E6E6]">
           <h1
-            className="text-[36px] font-semibold text-[#101827] mb-8"
+            className="text-[24px] md:text-[36px] font-semibold text-[#101827] mb-4 md:mb-8"
             style={{ fontFamily: "mango, sans-serif", lineHeight: "90%" }}
           >
             Įvesk kūno apimtis
           </h1>
 
-          <div className="flex gap-12">
-            {/* Left side - Body illustration and tips */}
-            <div className="flex-shrink-0 w-[280px]">
+          {/* Mobile: combined body + tips card */}
+          <div className="md:hidden border border-[#E6E6E6] rounded-xl p-4 flex gap-3 items-center mb-4">
+            <div className="flex-shrink-0">
+              {session?.user?.gender === "male" ? (
+                <MaleBodySvg className="w-[90px] h-[126px]" />
+              ) : (
+                <FemaleBodySvg className="w-[90px] h-[126px]" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">{tipsContent}</div>
+          </div>
+
+          <div className="md:flex md:gap-12">
+            {/* Desktop: Body illustration and tips */}
+            <div className="hidden md:block flex-shrink-0 w-[280px]">
               <div className="mb-6">
                 {session?.user?.gender === "male" ? (
                   <MaleBodySvg className="w-[280px] h-[427px]" />
@@ -152,102 +193,90 @@ export default function IvestiApimtisPage() {
                 )}
               </div>
 
-              <div className="border border-[#E6E6E6] rounded-xl p-4">
-                <h3
-                  className="text-[16px] font-semibold text-[#101827] mb-3"
-                  style={{ fontFamily: "Outfit, sans-serif" }}
-                >
-                  Kaip matuoti?
-                </h3>
-                <ul className="space-y-2 text-[13px] text-[#555B65]" style={{ fontFamily: "Outfit, sans-serif" }}>
-                  <li className="flex gap-2">
-                    <span>•</span>
-                    <span>Matuoti visada ta pačia ranka / koja (pvz., dešine)</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>•</span>
-                    <span>Naudoti minkštą siuvėjo metrą</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>•</span>
-                    <span>Matuoti 1x per savaitę, ryte</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>•</span>
-                    <span>Fiksuoti sistemoj per „Matavimų" skiltį</span>
-                  </li>
-                </ul>
-              </div>
+              <div className="border border-[#E6E6E6] rounded-xl p-4">{tipsContent}</div>
             </div>
 
-            {/* Right side - Form */}
-            <div className="flex-1 border border-[#E6E6E6] rounded-xl p-6">
+            {/* Form - measurements list */}
+            <div className="flex-1 md:border md:border-[#E6E6E6] md:rounded-xl md:p-6">
               <div className="space-y-0">
                 {measurementFields.map((field) => {
                   const currentValue = existingData.latest?.[field.key as keyof typeof existingData.latest] as number | null;
                   const change = existingData.changes?.[field.key as keyof typeof existingData.changes] as number | null;
 
                   return (
-                    <div key={field.key} className="flex items-center py-3 border-b border-[#F0F0F0] last:border-b-0">
-                      {/* Label and description */}
-                      <div className="flex-1 min-w-[200px]">
+                    <div
+                      key={field.key}
+                      className="py-3 border-b border-[#F0F0F0] last:border-b-0"
+                    >
+                      {/* Main row: label | current | input */}
+                      <div className="flex items-center gap-2">
                         <p
-                          className="text-[15px] font-semibold text-[#101827]"
+                          className="flex-1 min-w-0 text-[14px] md:text-[15px] font-semibold text-[#101827]"
                           style={{ fontFamily: "Outfit, sans-serif" }}
                         >
                           {field.label}
                         </p>
+
+                        {/* Desktop description next to label */}
                         <p
-                          className="text-[12px] text-[#555B65]"
+                          className="hidden md:block flex-[2] text-[12px] text-[#555B65]"
                           style={{ fontFamily: "Outfit, sans-serif", lineHeight: "140%" }}
                         >
                           {field.description}
                         </p>
+
+                        {/* Current value with change */}
+                        <div className="flex items-baseline justify-end gap-1 w-[90px] md:w-[120px]">
+                          {currentValue !== null ? (
+                            <>
+                              <span
+                                className="text-[14px] md:text-[16px] font-bold text-[#101827]"
+                                style={{ fontFamily: "Outfit, sans-serif", fontStyle: "italic" }}
+                              >
+                                {currentValue}
+                              </span>
+                              <span className="text-[11px] md:text-[13px] font-normal text-[#555B65]">{field.unit}</span>
+                              {change !== null && (
+                                <span className="ml-0.5">{formatChange(change)}</span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-[13px] text-[#9FA4B0]">—</span>
+                          )}
+                        </div>
+
+                        {/* Input */}
+                        <div className="flex items-center gap-1 md:gap-2 md:ml-6">
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={newValues[field.key] || ""}
+                            onChange={(e) => handleInputChange(field.key, e.target.value)}
+                            placeholder="0"
+                            className="w-[52px] md:w-[70px] h-[36px] md:h-[40px] px-2 md:px-3 text-center border border-[#E6E6E6] rounded-lg text-[13px] md:text-[14px] text-[#101827] focus:outline-none focus:border-[#60988E] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            style={{ fontFamily: "Outfit, sans-serif" }}
+                          />
+                          <span className="text-[12px] md:text-[13px] text-[#555B65] w-[22px] md:w-[30px]">{field.unit === "kg" ? "kg." : "cm."}</span>
+                        </div>
                       </div>
 
-                      {/* Current value with change */}
-                      <div className="w-[120px] flex items-baseline justify-end gap-1">
-                        {currentValue !== null ? (
-                          <>
-                            <span
-                              className="text-[16px] font-bold text-[#101827]"
-                              style={{ fontFamily: "Outfit, sans-serif", fontStyle: "italic" }}
-                            >
-                              {currentValue}
-                            </span>
-                            <span className="text-[13px] font-normal text-[#555B65]">{field.unit}</span>
-                            {change !== null && (
-                              <span className="ml-1">{formatChange(change)}</span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-[13px] text-[#9FA4B0]">—</span>
-                        )}
-                      </div>
-
-                      {/* Input */}
-                      <div className="flex items-center gap-2 ml-6">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={newValues[field.key] || ""}
-                          onChange={(e) => handleInputChange(field.key, e.target.value)}
-                          placeholder="0"
-                          className="w-[70px] h-[40px] px-3 text-center border border-[#E6E6E6] rounded-lg text-[14px] text-[#101827] focus:outline-none focus:border-[#60988E] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          style={{ fontFamily: "Outfit, sans-serif" }}
-                        />
-                        <span className="text-[13px] text-[#555B65] w-[30px]">{field.unit === "kg" ? "kg." : "cm."}</span>
-                      </div>
+                      {/* Mobile description below row */}
+                      <p
+                        className="md:hidden text-[11px] text-[#555B65] mt-1"
+                        style={{ fontFamily: "Outfit, sans-serif", lineHeight: "140%" }}
+                      >
+                        {field.description}
+                      </p>
                     </div>
                   );
                 })}
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 mt-8 justify-end">
+              <div className="flex flex-col-reverse md:flex-row gap-3 mt-6 md:mt-8 md:justify-end">
                 <button
                   onClick={() => router.push("/dashboard/apzvalga")}
-                  className="px-8 py-3 border border-[#E6E6E6] rounded-full text-[14px] font-medium text-[#101827] hover:bg-[#F5F5F5] transition-colors"
+                  className="px-6 md:px-8 py-3 border border-[#E6E6E6] rounded-full text-[14px] font-medium text-[#101827] hover:bg-[#F5F5F5] transition-colors"
                   style={{ fontFamily: "Outfit, sans-serif" }}
                 >
                   Atšaukti
@@ -255,7 +284,7 @@ export default function IvestiApimtisPage() {
                 <button
                   onClick={handleSave}
                   disabled={isSaving || Object.keys(newValues).length === 0}
-                  className="px-8 py-3 bg-[#60988E] rounded-full text-[14px] font-medium text-white hover:bg-[#4d7a72] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 md:px-8 py-3 bg-[#60988E] rounded-full text-[14px] font-medium text-white hover:bg-[#4d7a72] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontFamily: "Outfit, sans-serif" }}
                 >
                   {isSaving ? "Saugoma..." : "Išsaugoti"}

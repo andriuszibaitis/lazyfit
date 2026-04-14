@@ -22,6 +22,7 @@ export async function GET() {
         birthDate: true,
         gender: true,
         provider: true,
+        linkedEmail: true,
         emailNotifications: true,
         generalNotifications: true,
       }

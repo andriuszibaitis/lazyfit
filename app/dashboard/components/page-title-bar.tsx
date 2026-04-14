@@ -12,6 +12,9 @@ interface PageTitleBarProps {
   tabs?: TabItem[];
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
+  hideMobileTabs?: boolean;
+  showBack?: boolean;
+  backUrl?: string;
 }
 
 export default function PageTitleBar({
@@ -21,8 +24,11 @@ export default function PageTitleBar({
   tabs,
   activeTab,
   onTabChange,
+  hideMobileTabs = false,
+  showBack = false,
+  backUrl,
 }: PageTitleBarProps) {
-  const { setPageTitle: setHeaderTitle, setShowBackButton } = usePageTitle();
+  const { setPageTitle: setHeaderTitle, setShowBackButton, setBackUrl } = usePageTitle();
 
   useEffect(() => {
     const fetchWorkoutTitle = async () => {
@@ -59,20 +65,29 @@ export default function PageTitleBar({
           console.error("Klaida gaunant treniruotės pavadinimą:", error);
         }
       } else if (title) {
-        // Always set the title when this component mounts with a title prop
         setHeaderTitle(title);
-        setShowBackButton(false);
+        if (showBack) {
+          setShowBackButton(true);
+          setBackUrl(backUrl || null);
+        }
       }
     };
 
     fetchWorkoutTitle();
-  }, [workoutId, workoutTitle, title, setHeaderTitle, setShowBackButton]);
+
+    return () => {
+      if (showBack) {
+        setShowBackButton(false);
+        setBackUrl(null);
+      }
+    };
+  }, [workoutId, workoutTitle, title, setHeaderTitle, setShowBackButton, showBack, backUrl, setBackUrl]);
 
   return (
     <div>
       {/* Tabs Section */}
       {tabs && tabs.length > 0 && activeTab && onTabChange && (
-        <div className="max-w-7xl mx-auto mt-4 px-4 lg:px-6">
+        <div className={`max-w-7xl mx-auto mt-4 px-4 lg:px-6 ${hideMobileTabs ? 'hidden lg:block' : ''}`}>
           <CustomTabs
             tabs={tabs}
             activeTab={activeTab}

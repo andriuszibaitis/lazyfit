@@ -2,6 +2,11 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
+interface MobileGreeting {
+  userName: string;
+  userImage?: string | null;
+}
+
 interface PageTitleContextType {
   pageTitle: string;
   setPageTitle: (title: string) => void;
@@ -9,6 +14,8 @@ interface PageTitleContextType {
   setShowBackButton: (show: boolean) => void;
   backUrl: string | null;
   setBackUrl: (url: string | null) => void;
+  mobileGreeting: MobileGreeting | null;
+  setMobileGreeting: (greeting: MobileGreeting | null) => void;
 }
 
 const PageTitleContext = createContext<PageTitleContextType | undefined>(undefined);
@@ -17,9 +24,10 @@ export function PageTitleProvider({ children }: { children: ReactNode }) {
   const [pageTitle, setPageTitle] = useState('');
   const [showBackButton, setShowBackButton] = useState(false);
   const [backUrl, setBackUrl] = useState<string | null>(null);
+  const [mobileGreeting, setMobileGreeting] = useState<MobileGreeting | null>(null);
 
   return (
-    <PageTitleContext.Provider value={{ pageTitle, setPageTitle, showBackButton, setShowBackButton, backUrl, setBackUrl }}>
+    <PageTitleContext.Provider value={{ pageTitle, setPageTitle, showBackButton, setShowBackButton, backUrl, setBackUrl, mobileGreeting, setMobileGreeting }}>
       {children}
     </PageTitleContext.Provider>
   );

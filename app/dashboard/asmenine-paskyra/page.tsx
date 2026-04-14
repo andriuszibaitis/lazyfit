@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import PageTitleBar from "../components/page-title-bar";
 import { CustomTabs, TabItem } from "@/components/ui/custom-tabs";
 import ProfileAvatar from "../../components/profile-avatar";
@@ -14,11 +14,13 @@ import MembershipCancellationModal from "../../components/membership-cancellatio
 import SuccessModal from "../../components/success-modal";
 
 export default function AsmeninemPaskyraPage() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
   const [activeTab, setActiveTab] = useState("personal");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
   const [changingPassword, setChangingPassword] = useState(false);
   const [userData, setUserData] = useState({
     name: "",
@@ -27,6 +29,7 @@ export default function AsmeninemPaskyraPage() {
     gender: "",
     avatar: null as string | null,
     provider: "credentials",
+    linkedEmail: "" as string | null,
     emailNotifications: true,
     generalNotifications: true
   });
@@ -43,8 +46,206 @@ export default function AsmeninemPaskyraPage() {
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Fetch user data on component mount
+  // Link email flow
+  const [linkStep, setLinkStep] = useState<"idle" | "email" | "code" | "password" | "changePassword">("idle");
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkCode, setLinkCode] = useState("");
+  const [linkPassword, setLinkPassword] = useState("");
+  const [linkOldPassword, setLinkOldPassword] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState("");
+  const [linkCountdown, setLinkCountdown] = useState(0);
+
   useEffect(() => {
+    if (linkCountdown <= 0) return;
+    const timer = setTimeout(() => setLinkCountdown(linkCountdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [linkCountdown]);
+
+  const handleSendCode = async () => {
+    if (!linkEmail || !linkEmail.includes("@")) {
+      setLinkError("Įveskite teisingą el. pašto adresą");
+      return;
+    }
+    setLinkLoading(true);
+    setLinkError("");
+    try {
+      const res = await fetch("/api/user/link-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: linkEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLinkError(data.error);
+        return;
+      }
+      setLinkStep("code");
+      setLinkCountdown(30);
+    } catch {
+      setLinkError("Klaida siunčiant kodą");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleVerifyAndSetPassword = async () => {
+    if (linkCode.length !== 6) {
+      setLinkError("Įveskite 6 skaitmenų kodą");
+      return;
+    }
+    if (linkPassword.length < 8) {
+      setLinkError("Slaptažodis turi būti bent 8 simbolių");
+      return;
+    }
+    setLinkLoading(true);
+    setLinkError("");
+    try {
+      const res = await fetch("/api/user/link-email", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: linkEmail, code: linkCode, password: linkPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLinkError(data.error);
+        return;
+      }
+      setLinkStep("idle");
+      setLinkCode("");
+      setLinkPassword("");
+      setUserData(prev => ({ ...prev, linkedEmail: linkEmail }));
+    } catch {
+      setLinkError("Klaida susiejant el. paštą");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleUnlink = async (type: "email" | "google") => {
+    if (!confirm(type === "email" ? "Ar tikrai norite atjungti el. paštą?" : "Ar tikrai norite atjungti Google paskyrą?")) return;
+    try {
+      const res = await fetch("/api/user/unlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) {
+        if (type === "email") {
+          setUserData(prev => ({ ...prev, linkedEmail: null, hashedPassword: null }));
+          setLinkEmail("");
+        } else {
+          setUserData(prev => ({ ...prev, email: prev.linkedEmail || prev.email, linkedEmail: null, provider: "credentials" }));
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error);
+      }
+    } catch {
+      alert("Klaida atjungiant");
+    }
+  };
+
+  const handleChangeLinkedPassword = async () => {
+    if (linkOldPassword.length < 1) {
+      setLinkError("Įveskite seną slaptažodį");
+      return;
+    }
+    if (linkPassword.length < 8) {
+      setLinkError("Naujas slaptažodis turi būti bent 8 simbolių");
+      return;
+    }
+    setLinkLoading(true);
+    setLinkError("");
+    try {
+      const res = await fetch("/api/user/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: linkOldPassword, newPassword: linkPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLinkError(data.error);
+        return;
+      }
+      setLinkStep("idle");
+      setLinkOldPassword("");
+      setLinkPassword("");
+    } catch {
+      setLinkError("Klaida keičiant slaptažodį");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  // Delete account flow
+  const [showDeleteScreen, setShowDeleteScreen] = useState(false);
+  const [deleteCode, setDeleteCode] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteCodeSent, setDeleteCodeSent] = useState(false);
+
+  const handleSendDeleteCode = async () => {
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const res = await fetch("/api/user/delete-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userData.email }),
+      });
+      if (res.ok) {
+        setDeleteCodeSent(true);
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || "Klaida siunčiant kodą");
+      }
+    } catch {
+      setDeleteError("Klaida siunčiant kodą");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteCode.length < 6) {
+      setDeleteError("Įveskite kodą");
+      return;
+    }
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: deleteCode }),
+      });
+      if (res.ok) {
+        signOut({ callbackUrl: "/" });
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || "Klaida trinant paskyrą");
+      }
+    } catch {
+      setDeleteError("Klaida trinant paskyrą");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const hasBothLinked = userData.provider === "google" && !!userData.linkedEmail;
+
+  const isValidAvatar = (url: string | null) => {
+    if (!url) return false;
+    if (url.includes("googleusercontent.com") && url.includes("default")) return false;
+    return true;
+  };
+  const hasAvatar = isValidAvatar(userData.avatar) && !avatarError;
+
+  // Fetch user data when session is ready
+  useEffect(() => {
+    if (status === "loading") return;
+
     const fetchUserData = async () => {
       try {
         const response = await fetch("/api/user/profile");
@@ -57,6 +258,7 @@ export default function AsmeninemPaskyraPage() {
             gender: user.gender || "",
             avatar: user.image,
             provider: user.provider || "credentials",
+            linkedEmail: user.linkedEmail || null,
             emailNotifications: user.emailNotifications ?? true,
             generalNotifications: user.generalNotifications ?? true
           });
@@ -68,10 +270,8 @@ export default function AsmeninemPaskyraPage() {
       }
     };
 
-    if (session) {
-      fetchUserData();
-    }
-  }, [session]);
+    fetchUserData();
+  }, [status]);
 
   const tabs: TabItem[] = [
     {
@@ -257,10 +457,6 @@ export default function AsmeninemPaskyraPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    // This would need a separate API endpoint for account deletion
-    alert("Account deletion functionality would be implemented here");
-  };
 
   const toggleFaqItem = (index: number) => {
     setExpandedFaqItems(prev => ({
@@ -307,72 +503,99 @@ export default function AsmeninemPaskyraPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 p-6 font-outfit">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   const renderTabContent = () => {
     switch (activeTab) {
       case "personal":
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left column - Form fields */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Basic Info Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 space-y-4">
-                <FormField
-                  key="name"
-                  label="Vardas, pavardė"
-                  value={userData.name}
-                  onSave={(value) => handleFieldSave("name", value)}
-                  placeholder="Įveskite vardą ir pavardę"
-                  className="border-0 p-0"
-                  disabled={saving}
-                />
+          <>
+            {/* Mobile layout */}
+            {loading ? (
+              <div className="lg:hidden flex items-center justify-center py-20">
+                <div className="w-8 h-8 border-2 border-gray-300 border-t-[#60988E] rounded-full animate-spin"></div>
+              </div>
+            ) : (
+            <div className="lg:hidden font-[outfit]" style={{ animation: "fadeSlideUp 0.4s ease-out" }}>
+              {/* Avatar centered - full width bg */}
+              <div className="flex flex-col items-center py-6 bg-white -mx-4 rounded-[16px]">
+                <div className={`w-24 h-24 rounded-full overflow-hidden flex items-center justify-center mt-4 ${hasAvatar ? '' : 'bg-[#d6e8e4]'}`}>
+                  {hasAvatar ? (
+                    <img
+                      src={userData.avatar!}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <span className="text-[#60988E] font-semibold text-2xl font-[mango]">
+                      {userData.name ? userData.name.trim().split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "VR"}
+                    </span>
+                  )}
+                </div>
+                <label className="mt-3 mb-4 cursor-pointer">
+                  <span className="text-sm text-[#101827] border border-gray-300 rounded px-4 py-1.5 inline-block hover:bg-gray-50 transition-colors">
+                    Redaguoti nuotrauką
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarChange(file);
+                    }}
+                    className="hidden"
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+              </div>
 
-                <FormField
-                  key="email"
-                  label="El. paštas"
-                  value={userData.email}
-                  type="email"
-                  onSave={(value) => handleFieldSave("email", value)}
-                  placeholder="Įveskite el. paštą"
-                  className="border-0 p-0"
-                  disabled={saving}
-                  additionalContent={
-                    <div className="flex items-center space-x-4 text-sm">
-                      <span className="text-blue-600">Google</span>
-                      <span className="text-gray-400">
-                        Jūsų prijungta „Google" paskyra yra {userData.email}
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800">
-                        Atjungti
-                      </button>
-                    </div>
-                  }
-                />
-
-                <FormField
-                  key="birthDate"
-                  label="Gimimo data"
-                  value={userData.birthDate}
-                  type="date"
-                  onSave={(value) => handleFieldSave("birthDate", value)}
-                  className="border-0 p-0"
-                  disabled={saving}
-                />
-
-                <div className="border-0 p-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700">Lytis</label>
+              {/* Fields */}
+              <div className="bg-white -mx-4 rounded-[16px] px-4 mt-4 divide-y divide-gray-200">
+                {/* Vardas, pavardė */}
+                <div className="py-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-[#101827]">Vardas, pavardė</span>
+                    <button
+                      onClick={() => {
+                        const newName = prompt("Įveskite vardą ir pavardę:", userData.name);
+                        if (newName !== null && newName !== userData.name) {
+                          handleFieldSave("name", newName);
+                        }
+                      }}
+                      className="text-sm text-[#101827] hover:text-gray-700"
+                    >
+                      Redaguoti
+                    </button>
                   </div>
-                  <div className="flex items-center space-x-6">
+                  <p className="text-[15px] text-gray-500">{userData.name || "—"}</p>
+                </div>
+
+                {/* Gimimo data */}
+                <div className="py-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-[#101827]">Gimimo data</span>
+                    <button
+                      onClick={() => {
+                        const newDate = prompt("Įveskite gimimo datą (YYYY-MM-DD):", userData.birthDate);
+                        if (newDate !== null && newDate !== userData.birthDate) {
+                          handleFieldSave("birthDate", newDate);
+                        }
+                      }}
+                      className="text-sm text-[#101827] hover:text-gray-700"
+                    >
+                      Redaguoti
+                    </button>
+                  </div>
+                  <p className="text-[15px] text-gray-500">
+                    {userData.birthDate
+                      ? new Date(userData.birthDate).toLocaleDateString("lt-LT", { year: "numeric", month: "2-digit", day: "2-digit" })
+                      : "—"}
+                  </p>
+                </div>
+
+                {/* Lytis */}
+                <div className="py-4">
+                  <span className="text-sm text-[#101827]">Lytis</span>
+                  <div className="mt-2 space-y-2">
                     {[
                       { value: "", label: "Nepasirenkta" },
                       { value: "male", label: "Vyras" },
@@ -381,56 +604,438 @@ export default function AsmeninemPaskyraPage() {
                       <label key={option.value} className="flex items-center">
                         <input
                           type="radio"
-                          name="gender"
+                          name="gender-mobile"
                           value={option.value}
                           checked={userData.gender === option.value}
                           onChange={async (e) => {
-                            setUserData(prev => ({
-                              ...prev,
-                              gender: e.target.value
-                            }));
+                            setUserData(prev => ({ ...prev, gender: e.target.value }));
                             await handleFieldSave("gender", e.target.value);
                           }}
                           disabled={saving}
-                          className="mr-2 w-4 h-4 text-[#60988E] border-gray-300 focus:ring-[#60988E] focus:ring-2 disabled:opacity-50"
-                          style={{
-                            accentColor: '#60988E'
-                          }}
+                          className="mr-3 w-4 h-4"
+                          style={{ accentColor: '#60988E' }}
                         />
-                        <span className={`text-sm ${saving ? 'text-gray-400' : 'text-gray-900'}`}>{option.label}</span>
+                        <span className="text-[15px] text-[#101827]">{option.label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
+
+                {/* El. paštas */}
+                <div className="py-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-[#101827]">El. paštas</span>
+                    {hasBothLinked && linkStep === "idle" && userData.linkedEmail && (
+                      <button
+                        onClick={() => handleUnlink("email")}
+                        className="text-sm text-[#101827] hover:text-gray-700"
+                      >
+                        Atjungti
+                      </button>
+                    )}
+                  </div>
+
+                  {linkStep === "idle" && !userData.linkedEmail && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => setLinkStep("email")}
+                        className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-[#101827] hover:bg-gray-50 transition-colors"
+                      >
+                        Susieti
+                      </button>
+                    </div>
+                  )}
+
+                  {linkStep === "idle" && userData.linkedEmail && (
+                    <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2.5">
+                        <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        <span className="text-sm text-[#101827]">{userData.linkedEmail}</span>
+                      </div>
+                      <div className="border-t border-gray-200">
+                        <button
+                          onClick={() => { setLinkStep("email"); setLinkEmail(""); setLinkError(""); }}
+                          className="w-full flex items-center justify-between px-3 py-3 text-sm text-[#101827] hover:bg-gray-50 transition-colors"
+                        >
+                          <span>Keisti el. paštą</span>
+                          <span className="text-gray-400">&rsaquo;</span>
+                        </button>
+                      </div>
+                      <div className="border-t border-gray-200">
+                        <button
+                          onClick={() => { setLinkStep("changePassword"); setLinkOldPassword(""); setLinkPassword(""); setLinkError(""); }}
+                          className="w-full flex items-center justify-between px-3 py-3 text-sm text-[#101827] hover:bg-gray-50 transition-colors"
+                        >
+                          <span>Keisti slaptažodį</span>
+                          <span className="text-gray-400">&rsaquo;</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {linkStep === "email" && (
+                    <div className="mt-2 space-y-3">
+                      <input
+                        type="email"
+                        value={linkEmail}
+                        onChange={(e) => { setLinkEmail(e.target.value); setLinkError(""); }}
+                        placeholder="Įveskite el. pašto adresą"
+                        className="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm text-[#101827] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent"
+                      />
+                      {linkError && <p className="text-red-500 text-xs">{linkError}</p>}
+                      <button
+                        onClick={handleSendCode}
+                        disabled={linkLoading}
+                        className="w-full py-2.5 bg-[#101827] text-white rounded-lg text-sm hover:bg-[#2a2f38] transition-colors disabled:opacity-50"
+                      >
+                        {linkLoading ? "Siunčiama..." : "Siųsti kodą"}
+                      </button>
+                      <button
+                        onClick={() => { setLinkStep("idle"); setLinkEmail(""); setLinkError(""); }}
+                        className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+                      >
+                        Atšaukti
+                      </button>
+                    </div>
+                  )}
+
+                  {linkStep === "code" && (
+                    <div className="mt-2 space-y-3">
+                      <div className="flex items-start gap-2 bg-gray-50 rounded-lg p-3">
+                        <span className="text-red-500 text-sm mt-0.5">!</span>
+                        <div>
+                          <p className="text-sm text-[#101827]">
+                            Patvirtinimo laiškas išsiųstas adresu:
+                          </p>
+                          <p className="text-sm font-medium text-[#101827]">{linkEmail}</p>
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={linkCode}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                          setLinkCode(val);
+                          setLinkError("");
+                          if (val.length === 6) {
+                            setTimeout(() => setLinkStep("password"), 300);
+                          }
+                        }}
+                        placeholder="Įveskite 6 skaitmenų kodą"
+                        className="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm text-[#101827] text-center tracking-[8px] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent"
+                        maxLength={6}
+                      />
+                      <button
+                        onClick={handleSendCode}
+                        disabled={linkCountdown > 0 || linkLoading}
+                        className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        {linkCountdown > 0 ? `Pakartoti patvirtinimo laišką po (${linkCountdown}) sek` : "Pakartoti patvirtinimo laišką"}
+                      </button>
+                      {linkError && <p className="text-red-500 text-xs">{linkError}</p>}
+                      <div className="border-t border-gray-200 mt-1">
+                        <button
+                          onClick={() => { setLinkStep("email"); setLinkCode(""); setLinkError(""); }}
+                          className="w-full flex items-center justify-between py-3 text-sm text-[#101827]"
+                        >
+                          <span>Keisti el. paštą</span>
+                          <span className="text-gray-400">&rsaquo;</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {linkStep === "password" && (
+                    <div className="mt-2 space-y-3">
+                      <input
+                        type="password"
+                        value={linkPassword}
+                        onChange={(e) => { setLinkPassword(e.target.value); setLinkError(""); }}
+                        placeholder="Nustatykite slaptažodį (min. 8 simboliai)"
+                        className="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm text-[#101827] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent"
+                      />
+                      {linkError && <p className="text-red-500 text-xs">{linkError}</p>}
+                      <button
+                        onClick={handleVerifyAndSetPassword}
+                        disabled={linkLoading}
+                        className="w-full py-2.5 bg-[#101827] text-white rounded-lg text-sm hover:bg-[#2a2f38] transition-colors disabled:opacity-50"
+                      >
+                        {linkLoading ? "Susiejama..." : "Susieti el. paštą"}
+                      </button>
+                    </div>
+                  )}
+
+                  {linkStep === "changePassword" && (
+                    <div className="mt-2 space-y-3">
+                      <input
+                        type="password"
+                        value={linkOldPassword}
+                        onChange={(e) => { setLinkOldPassword(e.target.value); setLinkError(""); }}
+                        placeholder="Senas slaptažodis"
+                        className="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm text-[#101827] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent"
+                      />
+                      <input
+                        type="password"
+                        value={linkPassword}
+                        onChange={(e) => { setLinkPassword(e.target.value); setLinkError(""); }}
+                        placeholder="Naujas slaptažodis (min. 8 simboliai)"
+                        className="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm text-[#101827] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent"
+                      />
+                      {linkError && <p className="text-red-500 text-xs">{linkError}</p>}
+                      <button
+                        onClick={handleChangeLinkedPassword}
+                        disabled={linkLoading}
+                        className="w-full py-2.5 bg-[#101827] text-white rounded-lg text-sm hover:bg-[#2a2f38] transition-colors disabled:opacity-50"
+                      >
+                        {linkLoading ? "Keičiama..." : "Pakeisti slaptažodį"}
+                      </button>
+                      <button
+                        onClick={() => { setLinkStep("idle"); setLinkError(""); }}
+                        className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+                      >
+                        Atšaukti
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Prisijungimas per Google */}
+                <div className="py-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-[#101827]">Prisijungimas per Google</span>
+                    {hasBothLinked && userData.provider === "google" && (
+                      <button
+                        onClick={() => handleUnlink("google")}
+                        className="text-sm text-[#101827] hover:text-gray-700"
+                      >
+                        Atjungti
+                      </button>
+                    )}
+                  </div>
+                  {userData.provider === "google" ? (
+                    <div className="mt-2 border border-gray-200 rounded-lg p-4">
+                      <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" className="h-5 mb-1" />
+                      <p className="text-sm text-gray-500">{userData.email}</p>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => signIn("google", { callbackUrl: "/dashboard/asmenine-paskyra" })}
+                        className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-[#101827] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" className="h-4" />
+                        Susieti Google paskyrą
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Atsijungti */}
+                <div className="py-4">
+                  <span className="text-sm text-[#101827]">Atsijungti</span>
+                  <div className="mt-2">
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="w-full py-2.5 border border-gray-300 rounded-lg text-sm text-[#101827] hover:bg-gray-50 transition-colors"
+                    >
+                      Atsijungti
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Password Section */}
-              <PasswordSection
-                onPasswordChange={handlePasswordChange}
-                loading={changingPassword}
-                isOAuthUser={userData.provider !== "credentials"}
-              />
+              {/* Ištrinti paskyrą */}
+              <div className="py-6 text-center">
+                <button
+                  onClick={() => { setShowDeleteScreen(true); handleSendDeleteCode(); }}
+                  className="text-red-500 text-sm font-medium hover:text-red-600 transition-colors"
+                >
+                  Ištrinti paskyrą
+                </button>
+              </div>
 
-              {/* Delete Account Section */}
-              <DeleteAccount
-                onDelete={handleDeleteAccount}
-                userEmail={userData.email}
-              />
+              {/* Delete account screen */}
+              {showDeleteScreen && (
+                <div className="fixed inset-0 bg-[#F7F7F7] z-50 flex flex-col font-[outfit]" style={{ animation: "fadeSlideUp 0.3s ease-out" }}>
+                  {/* Header */}
+                  <div className="px-4 py-3 flex items-center justify-center relative">
+                    <button
+                      onClick={() => { setShowDeleteScreen(false); setDeleteCode(""); setDeleteError(""); }}
+                      className="absolute left-4 flex items-center justify-center border border-gray-200 bg-gray-50 rounded-md w-10 h-10 hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <h1 className="text-[28px] font-semibold text-[#101827] font-[mango] italic">
+                      Ištrinti paskyrą
+                    </h1>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 px-4 py-6">
+                    <h2 className="text-[20px] font-semibold text-[#101827] text-center mb-6">
+                      Mums liūdna matyti tave išeinantį
+                    </h2>
+
+                    {/* Warning */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <div className="w-5 h-5 rounded-full border-2 border-red-400 flex items-center justify-center">
+                            <span className="text-red-400 text-xs font-bold">!</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-[#101827] leading-relaxed">
+                          Šis veiksmas yra negrįžtamas. Visa jūsų informacija, pasiekimai ir kt. bus visiškai ištrinta. Tai neturi įtakos jūsų galimybei ateityje iš naujo sukurti visiškai naują paskyrą.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Code input */}
+                    <p className="text-sm text-[#101827] mb-3">
+                      Įrašyk kodą kurį mes išsiuntėme į {userData.email}, jeigu nori tęsti
+                    </p>
+
+                    <input
+                      type="text"
+                      value={deleteCode}
+                      onChange={(e) => { setDeleteCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setDeleteError(""); }}
+                      placeholder="Įrašyk kodą"
+                      className="w-full py-3 px-4 border border-gray-300 rounded-lg text-sm text-[#101827] focus:outline-none focus:ring-2 focus:ring-[#60988E] focus:border-transparent mb-4"
+                      maxLength={6}
+                    />
+
+                    {deleteError && <p className="text-red-500 text-xs mb-4">{deleteError}</p>}
+
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={deleteLoading || deleteCode.length < 6}
+                      className="w-full py-3 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                      {deleteLoading ? "Trinama..." : "Ištrinti"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+            )}
 
-            {/* Right column - Profile Avatar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <ProfileAvatar
-                  src={userData.avatar || undefined}
-                  userName={userData.name}
-                  onImageChange={handleAvatarChange}
-                  onImageRemove={handleAvatarRemove}
-                  loading={uploadingAvatar}
+            {/* Desktop layout */}
+            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left column - Form fields */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Basic Info Card */}
+                <div className="bg-white rounded-lg p-6 border border-gray-200 space-y-4">
+                  <FormField
+                    key="name"
+                    label="Vardas, pavardė"
+                    value={userData.name}
+                    onSave={(value) => handleFieldSave("name", value)}
+                    placeholder="Įveskite vardą ir pavardę"
+                    className="border-0 p-0"
+                    disabled={saving}
+                  />
+
+                  <FormField
+                    key="email"
+                    label="El. paštas"
+                    value={userData.email}
+                    type="email"
+                    onSave={(value) => handleFieldSave("email", value)}
+                    placeholder="Įveskite el. paštą"
+                    className="border-0 p-0"
+                    disabled={saving}
+                    additionalContent={
+                      <div className="flex items-center space-x-4 text-sm">
+                        <span className="text-blue-600">Google</span>
+                        <span className="text-gray-400">
+                          Jūsų prijungta „Google" paskyra yra {userData.email}
+                        </span>
+                        <button className="text-blue-600 hover:text-blue-800">
+                          Atjungti
+                        </button>
+                      </div>
+                    }
+                  />
+
+                  <FormField
+                    key="birthDate"
+                    label="Gimimo data"
+                    value={userData.birthDate}
+                    type="date"
+                    onSave={(value) => handleFieldSave("birthDate", value)}
+                    className="border-0 p-0"
+                    disabled={saving}
+                  />
+
+                  <div className="border-0 p-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700">Lytis</label>
+                    </div>
+                    <div className="flex items-center space-x-6">
+                      {[
+                        { value: "", label: "Nepasirenkta" },
+                        { value: "male", label: "Vyras" },
+                        { value: "female", label: "Moteris" }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-center">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value={option.value}
+                            checked={userData.gender === option.value}
+                            onChange={async (e) => {
+                              setUserData(prev => ({
+                                ...prev,
+                                gender: e.target.value
+                              }));
+                              await handleFieldSave("gender", e.target.value);
+                            }}
+                            disabled={saving}
+                            className="mr-2 w-4 h-4 text-[#60988E] border-gray-300 focus:ring-[#60988E] focus:ring-2 disabled:opacity-50"
+                            style={{
+                              accentColor: '#60988E'
+                            }}
+                          />
+                          <span className={`text-sm ${saving ? 'text-gray-400' : 'text-gray-900'}`}>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Password Section */}
+                <PasswordSection
+                  onPasswordChange={handlePasswordChange}
+                  loading={changingPassword}
+                  isOAuthUser={userData.provider !== "credentials"}
+                />
+
+                {/* Delete Account Section */}
+                <DeleteAccount
+                  onDelete={handleDeleteAccount}
+                  userEmail={userData.email}
                 />
               </div>
+
+              {/* Right column - Profile Avatar */}
+              <div className="lg:col-span-1">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <ProfileAvatar
+                    src={userData.avatar || undefined}
+                    userName={userData.name}
+                    onImageChange={handleAvatarChange}
+                    onImageRemove={handleAvatarRemove}
+                    loading={uploadingAvatar}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         );
       case "reports":
         return (
@@ -1135,14 +1740,17 @@ export default function AsmeninemPaskyraPage() {
   };
 
   return (
-    <>
+    <div className="font-[outfit]">
       <PageTitleBar
-        title="Asmeninė paskyra"
+        title="Asmeninė informacija"
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        hideMobileTabs
+        showBack
+        backUrl="/dashboard/apzvalga"
       />
-      <div className="flex-1 p-6 font-outfit">
+      <div className="flex-1 px-4 py-4 lg:p-6 font-[outfit]">
         <div className="max-w-7xl mx-auto">
           {renderTabContent()}
         </div>
@@ -1175,6 +1783,6 @@ export default function AsmeninemPaskyraPage() {
         title="Jūsų narystė sėkmingai atšaukta!"
         buttonText="Į pradinis puslapį"
       />
-    </>
+    </div>
   );
 }

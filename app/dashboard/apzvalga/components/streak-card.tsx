@@ -17,18 +17,18 @@ export default function StreakCard({
   const isFirstDay = streakDays === 1;
 
   return (
-    <div className="bg-[#101827] rounded-2xl p-6 text-white relative overflow-hidden h-full">
+    <div className="bg-[#101827] rounded-2xl p-4 md:p-6 text-white relative overflow-hidden h-full">
       <div>
         <p
-          className="text-[13px] font-normal mb-2"
+          className="text-[13px] md:text-[13px] font-normal mb-1 md:mb-2"
           style={{ fontFamily: "Outfit, sans-serif", lineHeight: "120%" }}
         >
           {isFirstDay ? "Sėkminga pradžia! Prisijungei:" : "Puikus tempas! Prisijungei:"}
         </p>
 
-        <div className="mb-6">
+        <div className="mb-3 md:mb-6">
           <span
-            className="text-[80px] font-bold uppercase"
+            className="text-[52px] md:text-[80px] font-bold uppercase"
             style={{
               fontFamily: "mango, sans-serif",
               lineHeight: "80%",
@@ -40,8 +40,8 @@ export default function StreakCard({
         </div>
 
         {/* Flame icon - absolute positioned */}
-        <div className="absolute top-4 right-4">
-          <svg width="74" height="74" viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div className="absolute bottom-3 right-3 md:top-4 md:right-4">
+          <svg className="w-[46px] h-[46px] md:w-[74px] md:h-[74px]" viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M37 74C57.4345 74 74 57.4345 74 37C74 16.5655 57.4345 0 37 0C16.5655 0 0 16.5655 0 37C0 57.4345 16.5655 74 37 74Z" fill="#60988E"/>
             <path d="M43.2469 13.1152L27.0003 29.3618L22.7602 25.1217L18.7539 32.2656L32.8613 46.373L21.2456 57.9887L37.2533 73.9964C55.4169 73.8746 70.4708 60.6666 73.4593 43.3278L43.2469 13.1152Z" fill="#315E56"/>
             <path d="M30.3955 9.18636C31.1543 9.86653 33.3999 12.0575 33.698 15.4245C33.7638 16.1665 33.8206 17.8267 32.6703 20.3914C31.0233 24.0635 29.0687 24.7749 27.2032 27.4966C26.0413 29.1917 24.7709 31.8753 24.5768 36.0784C24.08 35.0046 23.5806 33.6873 23.2139 32.1469C22.5425 29.3261 22.7596 25.1209 22.7589 25.1219C17.8547 29.2087 14.7305 35.3637 14.7305 42.2467C14.7305 54.551 24.705 64.5256 37.0094 64.5256L40.3858 39.4852L37.0092 9.50476C33.9787 8.68267 31.3568 9.02723 30.3955 9.18636Z" fill="#FF6C52"/>
@@ -52,10 +52,10 @@ export default function StreakCard({
         </div>
 
         <p
-          className="text-[13px] font-normal text-[#EFEFEF]"
+          className="text-[12px] md:text-[13px] font-normal text-[#EFEFEF]"
           style={{ fontFamily: "Outfit, sans-serif", lineHeight: "120%" }}
         >
-          Liko {daysUntilAchievement} dienos iki „{achievementName}" pasiekimo!
+          Liko {daysUntilAchievement} d. iki „{achievementName}" pasiekimo!
         </p>
       </div>
     </div>

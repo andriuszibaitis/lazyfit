@@ -78,10 +78,10 @@ export default function BodyMeasurementsCard() {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 h-full flex flex-col border border-[#E6E6E6]">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-2xl p-4 md:p-6 h-full flex flex-col border border-[#E6E6E6]">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <h3
-          className="text-[30px] font-semibold text-[#101827]"
+          className="text-[24px] md:text-[30px] font-semibold text-[#101827]"
           style={{ fontFamily: "mango, sans-serif", lineHeight: "90%" }}
         >
           Kūno apimtys
@@ -113,30 +113,30 @@ export default function BodyMeasurementsCard() {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-3 md:gap-6 items-center">
         {/* Body illustration */}
         <div className="flex-shrink-0">
           {session?.user?.gender === "male" ? (
-            <MaleBodySvg className="w-[166px] h-[233px]" />
+            <MaleBodySvg className="w-[120px] h-[168px] md:w-[166px] md:h-[233px]" />
           ) : (
-            <FemaleBodySvg className="w-[166px] h-[232px]" />
+            <FemaleBodySvg className="w-[120px] h-[168px] md:w-[166px] md:h-[232px]" />
           )}
         </div>
 
         {/* Measurements list */}
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
           {measurements.map((m, index) => (
             <div key={index} className="flex items-center text-sm">
-              <span className="text-[#101827] font-semibold text-[13px] leading-[120%] whitespace-pre-line w-28">{m.label}</span>
+              <span className="text-[#101827] font-semibold text-[12px] md:text-[13px] leading-[120%] whitespace-pre-line flex-1 min-w-0">{m.label}</span>
               {m.value ? (
                 <>
-                  <div className="flex items-center gap-1 w-16">
-                    <span className="font-semibold text-[#101827] text-[16px] leading-[120%] tracking-[-0.02em]">
+                  <div className="flex items-baseline gap-1 w-[56px] md:w-[72px] justify-end">
+                    <span className="font-semibold text-[#101827] text-[15px] md:text-[16px] leading-[120%] tracking-[-0.02em]">
                       {m.value}
                     </span>
-                    <span className="text-[#555B65] text-[13px] font-normal leading-[120%]">{m.unit}</span>
+                    <span className="text-[#555B65] text-[12px] md:text-[13px] font-normal leading-[120%]">{m.unit}</span>
                   </div>
-                  <span className="w-12">{formatChange(m.change)}</span>
+                  <div className="w-9 md:w-12 text-right">{formatChange(m.change)}</div>
                 </>
               ) : (
                 <span className="text-[#9FA4B0]">- {m.unit}</span>

@@ -6,6 +6,7 @@ import SideNavigation from "./components/side-navigation";
 import { PageTitleProvider } from "./contexts/page-title-context";
 import { MobileMenuProvider } from "./contexts/mobile-menu-context";
 import DashboardWrapper from "./components/dashboard-wrapper";
+import BottomNavigation from "./components/bottom-navigation";
 
 export default async function DashboardLayout({
   children,
@@ -26,8 +27,10 @@ export default async function DashboardLayout({
 
           <div className="flex-1 flex flex-col min-w-0">
             <DashboardWrapper />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-20 lg:pb-0">{children}</main>
           </div>
+
+          <BottomNavigation />
         </div>
       </MobileMenuProvider>
     </PageTitleProvider>

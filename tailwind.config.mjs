@@ -113,6 +113,15 @@ export default {
         "text-tiny-sb": ["11px", { lineHeight: "1.2", fontWeight: "600" }],
         "text-tiny-bold": ["11px", { lineHeight: "1.2", fontWeight: "700" }],
       },
+      keyframes: {
+        "fade-slide-up": {
+          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-slide-up": "fade-slide-up 0.35s ease-out",
+      },
     },
   },
   plugins: [require("@tailwindcss/aspect-ratio")],

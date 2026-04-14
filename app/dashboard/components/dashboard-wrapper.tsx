@@ -4,7 +4,7 @@ import DashboardHeader from "./dashboard-header";
 import { usePageTitle } from "../contexts/page-title-context";
 
 export default function DashboardWrapper() {
-  const { pageTitle, showBackButton, backUrl } = usePageTitle();
+  const { pageTitle, showBackButton, backUrl, mobileGreeting } = usePageTitle();
 
-  return <DashboardHeader pageTitle={pageTitle} showBackButton={showBackButton} backUrl={backUrl} />;
+  return <DashboardHeader pageTitle={pageTitle} showBackButton={showBackButton} backUrl={backUrl} mobileGreeting={mobileGreeting} />;
 }

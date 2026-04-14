@@ -17,18 +17,26 @@ interface ApzvalgaContentProps {
 }
 
 export default function ApzvalgaContent({ user }: ApzvalgaContentProps) {
-  const { setPageTitle } = usePageTitle();
+  const { setPageTitle, setMobileGreeting } = usePageTitle();
   const firstName = user?.name?.split(" ")[0] || "Vartotojau";
 
   useEffect(() => {
     setPageTitle(`Sveiki, ${firstName}`);
-  }, [setPageTitle, firstName]);
+    setMobileGreeting({ userName: user?.name || firstName, userImage: user?.image });
+    return () => setMobileGreeting(null);
+  }, [setPageTitle, setMobileGreeting, firstName, user?.name, user?.image]);
 
   return (
-    <div className="flex-1 p-6 bg-[#F5F5F5]">
+    <div className="flex-1 px-4 py-4 lg:p-6 bg-[#F5F5F5]">
       <div className="max-w-7xl mx-auto">
-        {/* Top row - custom grid */}
-        <div className="grid grid-cols-1 md:grid-cols-[305px_1fr_1fr] gap-4 mb-4 auto-rows-fr">
+        {/* Mobile: Streak + Completed side by side */}
+        <div className="grid grid-cols-2 gap-4 mb-4 md:hidden">
+          <StreakCard userName={user?.name} />
+          <CompletedWorkoutsCard />
+        </div>
+
+        {/* Top row - desktop grid */}
+        <div className="hidden md:grid md:grid-cols-[305px_1fr_1fr] gap-4 mb-4 auto-rows-fr">
           {/* Left column - Streak + Completed workouts (narrower) */}
           <div className="flex flex-col gap-4 h-full">
             <div className="flex-1">
@@ -46,8 +54,15 @@ export default function ApzvalgaContent({ user }: ApzvalgaContentProps) {
           <WeightTrackingCard />
         </div>
 
-        {/* Second row - 2 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Mobile: WeeklyPlan -> Body measurements -> Nutrition */}
+        <div className="md:hidden space-y-4 mb-4">
+          <WeeklyPlanCard />
+          <BodyMeasurementsCard />
+          <NutritionStatsCard />
+        </div>
+
+        {/* Second row - 2 columns (desktop) */}
+        <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4">
           <WeeklyPlanCard />
           <NutritionStatsCard />
         </div>

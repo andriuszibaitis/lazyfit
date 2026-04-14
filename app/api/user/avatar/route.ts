@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../lib/auth-options";
 import { prisma } from "../../../lib/prismadb";
+import { writeFile, unlink } from "fs/promises";
+import path from "path";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +20,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       return NextResponse.json(
         { error: "File must be an image" },
@@ -26,7 +27,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
         { error: "File size must be less than 5MB" },
@@ -34,30 +34,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, we'll just return a mock URL
-    // In a real implementation, you would:
-    // 1. Upload to cloud storage (AWS S3, Cloudinary, etc.)
-    // 2. Get the uploaded file URL
-    // 3. Save that URL to the database
+    // Get file extension
+    const ext = file.name.split(".").pop() || "jpg";
+    const fileName = `${session.user.id}-${Date.now()}.${ext}`;
+    const filePath = path.join(process.cwd(), "public", "uploads", "avatars", fileName);
 
-    const mockImageUrl = `/uploads/avatars/${session.user.email}-${Date.now()}.jpg`;
+    // Write file to disk
+    const bytes = await file.arrayBuffer();
+    await writeFile(filePath, Buffer.from(bytes));
+
+    const imageUrl = `/uploads/avatars/${fileName}`;
+
+    // Delete old avatar file if exists
+    const currentUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { image: true },
+    });
+
+    if (currentUser?.image?.startsWith("/uploads/avatars/")) {
+      const oldPath = path.join(process.cwd(), "public", currentUser.image);
+      try { await unlink(oldPath); } catch {}
+    }
 
     // Update user's image in database
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { email: session.user.email },
-      data: { image: mockImageUrl },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      }
+      data: { image: imageUrl },
     });
 
     return NextResponse.json({
       message: "Avatar uploaded successfully",
-      imageUrl: mockImageUrl,
-      user: updatedUser
+      imageUrl,
     });
   } catch (error) {
     console.error("Error uploading avatar:", error);
@@ -76,21 +83,24 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Remove avatar from user
-    const updatedUser = await prisma.user.update({
+    // Delete avatar file if exists
+    const currentUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { image: true },
+    });
+
+    if (currentUser?.image?.startsWith("/uploads/avatars/")) {
+      const filePath = path.join(process.cwd(), "public", currentUser.image);
+      try { await unlink(filePath); } catch {}
+    }
+
+    await prisma.user.update({
       where: { email: session.user.email },
       data: { image: null },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      }
     });
 
     return NextResponse.json({
       message: "Avatar removed successfully",
-      user: updatedUser
     });
   } catch (error) {
     console.error("Error removing avatar:", error);
