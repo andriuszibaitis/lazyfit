@@ -12,8 +12,14 @@ const navItems = [
   { name: "Profilis", href: "/dashboard/asmenine-paskyra", icon: User },
 ];
 
+const HIDE_ON_PATHS = ["/dashboard/training/"];
+
 export default function BottomNavigation() {
   const pathname = usePathname();
+
+  if (HIDE_ON_PATHS.some((p) => pathname.startsWith(p))) {
+    return null;
+  }
 
   const isActive = (href: string) => {
     if (href === "/dashboard/apzvalga") {

@@ -241,12 +241,12 @@ export default function KlausimaiPage() {
   if (loading) {
     return (
       <>
-        <PageTitleBar title="Klausimai" />
-        <div className="flex-1 p-6">
+        <PageTitleBar title="Klausimai" showBack backUrl="/dashboard/apzvalga" />
+        <div className="flex-1 px-4 py-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
-              <span className="ml-3 text-dark-grey">Kraunama...</span>
+              <span className="ml-3 text-dark-grey font-[outfit]">Kraunama...</span>
             </div>
           </div>
         </div>
@@ -256,11 +256,28 @@ export default function KlausimaiPage() {
 
   return (
     <>
-      <PageTitleBar title="Klausimai" />
-      <div className="flex-1 p-6">
+      <PageTitleBar
+        title="Klausimai"
+        tabs={tabs}
+        activeTab={activeCategory}
+        onTabChange={handleTabChange}
+        hideMobileTabs
+        showBack
+        backUrl="/dashboard/apzvalga"
+      />
+      <div className="flex-1 px-4 py-4 lg:p-6 font-[outfit]">
         <div className="max-w-7xl mx-auto">
-          {/* Tabs */}
-          <div className="mb-8">
+          {/* Mobile Tabs */}
+          <div className="lg:hidden mb-4">
+            <CustomTabs
+              tabs={tabs}
+              activeTab={activeCategory}
+              onTabChange={handleTabChange}
+            />
+          </div>
+
+          {/* Desktop Tabs */}
+          <div className="hidden lg:block mb-8">
             <CustomTabs
               tabs={tabs}
               activeTab={activeCategory}
@@ -270,22 +287,22 @@ export default function KlausimaiPage() {
           </div>
 
           {/* Search and Ask Section */}
-          <div className="rounded-[32px] border border-dashed border-[#9FA4B0] p-8 mb-8">
+          <div className="rounded-2xl lg:rounded-[32px] border border-dashed border-[#9FA4B0] p-5 lg:p-8 mb-6 lg:mb-8">
             <h2
-              className="text-[36px] font-semibold text-center text-black mb-2"
+              className="text-[24px] lg:text-[36px] font-semibold text-center text-black mb-2"
               style={{ fontFamily: "mango, sans-serif", lineHeight: "90%" }}
             >
               Nerandi dominančio klausimo?
             </h2>
-            <p className="text-center text-dark-grey text-sm-regular mb-6">
+            <p className="text-center text-[#555B65] text-xs lg:text-sm mb-4 lg:mb-6">
               Pasinaudok &quot;paieškos&quot; įvesties langu arba užduok
               <br />
               klausimą mums ir mes atsakysime
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 lg:gap-4">
               <div ref={searchRef} className="relative w-full sm:w-80">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-brand-green z-10" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-brand-green z-10" />
                 <input
                   type="text"
                   placeholder="Paieška"
@@ -299,11 +316,10 @@ export default function KlausimaiPage() {
                     setShowDropdown(true);
                   }}
                   onBlur={() => setIsFocused(false)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-light-grey rounded-full text-sm-regular focus:outline-none focus:border-brand-green transition-colors"
+                  className="w-full pl-10 lg:pl-12 pr-4 py-2.5 lg:py-3 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:border-[#60988E] transition-colors"
                 />
-                {/* Search suggestions dropdown */}
                 {showDropdown && searchSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-light-grey overflow-hidden z-20">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-20">
                     {searchSuggestions.map((suggestion, idx) => (
                       <button
                         key={`${suggestion.categoryId}-${suggestion.index}`}
@@ -313,20 +329,20 @@ export default function KlausimaiPage() {
                           handleSuggestionClick(suggestion.categoryId, suggestion.index);
                         }}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                          idx !== searchSuggestions.length - 1 ? "border-b border-light-grey" : ""
+                          idx !== searchSuggestions.length - 1 ? "border-b border-gray-200" : ""
                         }`}
                       >
-                        <p className="text-sm text-black line-clamp-1">{suggestion.question}</p>
-                        <p className="text-xs text-dark-grey mt-0.5">{suggestion.categoryTitle}</p>
+                        <p className="text-sm text-[#101827] line-clamp-1">{suggestion.question}</p>
+                        <p className="text-xs text-[#555B65] mt-0.5">{suggestion.categoryTitle}</p>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <span className="text-dark-grey text-sm-regular">arba</span>
+              <span className="text-[#555B65] text-xs lg:text-sm">arba</span>
               <button
                 onClick={() => setShowAskModal(true)}
-                className="bg-brand-green hover:bg-brand-green-dark text-white text-sm font-normal px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
+                className="bg-[#60988E] hover:bg-[#4a7168] text-white text-sm font-normal px-6 py-2.5 lg:py-3 rounded-lg transition-colors whitespace-nowrap"
               >
                 Užduoti klausimą
               </button>
@@ -335,24 +351,22 @@ export default function KlausimaiPage() {
 
           {/* FAQ Categories with Items */}
           {filteredCategories.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {filteredCategories.map((category) => (
                 <div
                   key={category.id}
-                  className="bg-white rounded-2xl border border-light-grey overflow-hidden"
+                  className="bg-white rounded-2xl lg:border lg:border-gray-200 overflow-hidden -mx-4 px-4 lg:mx-0 lg:px-0"
                 >
-                  {/* Category Title */}
-                  <div className="p-5 pb-0">
+                  <div className="p-0 pb-0 lg:p-5 lg:pb-0">
                     <h3
-                      className="text-[36px] font-semibold text-black"
+                      className="text-[22px] lg:text-[36px] font-semibold text-[#101827]"
                       style={{ fontFamily: "mango, sans-serif", lineHeight: "90%" }}
                     >
                       {category.title}
                     </h3>
                   </div>
 
-                  {/* Items */}
-                  <div className="mt-4">
+                  <div className="mt-3 lg:mt-4">
                     {category.items.map((item, index) => {
                       const itemKey = `${category.id}-${index}`;
                       const isExpanded = expandedItems[itemKey];
@@ -361,19 +375,19 @@ export default function KlausimaiPage() {
                         <div
                           key={itemKey}
                           id={`faq-item-${itemKey}`}
-                          className={`${index !== 0 ? "border-t border-light-grey" : ""}`}
+                          className={`${index !== 0 ? "border-t border-gray-200" : ""}`}
                         >
                           <button
                             onClick={() => toggleItem(itemKey)}
-                            className="w-full flex justify-between items-center text-left px-5 py-4 hover:bg-white-darken transition-colors"
+                            className="w-full flex justify-between items-center text-left px-0 lg:px-5 py-3 lg:py-4 hover:bg-gray-50 transition-colors"
                           >
-                            <span className="text-sm-medium text-black pr-4">
+                            <span className="text-sm font-medium text-[#101827] pr-4">
                               {index + 1}. {item.question}
                             </span>
                             {isExpanded ? (
-                              <Minus className="w-5 h-5 text-dark-grey flex-shrink-0" />
+                              <Minus className="w-4 h-4 lg:w-5 lg:h-5 text-[#555B65] flex-shrink-0" />
                             ) : (
-                              <Plus className="w-5 h-5 text-dark-grey flex-shrink-0" />
+                              <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-[#555B65] flex-shrink-0" />
                             )}
                           </button>
                           <div
@@ -383,7 +397,7 @@ export default function KlausimaiPage() {
                                 : "max-h-0 opacity-0"
                             }`}
                           >
-                            <div className="px-5 pb-5 text-sm-regular text-dark-grey leading-relaxed">
+                            <div className="px-0 lg:px-5 pb-4 lg:pb-5 text-xs lg:text-sm text-[#555B65] leading-relaxed">
                               {item.answer}
                             </div>
                           </div>
@@ -395,8 +409,8 @@ export default function KlausimaiPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-light-grey p-8 text-center">
-              <p className="text-dark-grey">
+            <div className="bg-white rounded-2xl lg:border lg:border-gray-200 p-6 lg:p-8 text-center -mx-4 lg:mx-0">
+              <p className="text-sm text-[#555B65]">
                 {searchQuery
                   ? "Nerasta klausimų pagal jūsų paiešką."
                   : "Šioje kategorijoje nėra klausimų."}

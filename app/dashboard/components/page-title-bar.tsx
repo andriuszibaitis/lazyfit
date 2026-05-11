@@ -13,6 +13,7 @@ interface PageTitleBarProps {
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
   hideMobileTabs?: boolean;
+  hideMobileHeader?: boolean;
   showBack?: boolean;
   backUrl?: string;
 }
@@ -25,10 +26,18 @@ export default function PageTitleBar({
   activeTab,
   onTabChange,
   hideMobileTabs = false,
+  hideMobileHeader = false,
   showBack = false,
   backUrl,
 }: PageTitleBarProps) {
-  const { setPageTitle: setHeaderTitle, setShowBackButton, setBackUrl } = usePageTitle();
+  const { setPageTitle: setHeaderTitle, setShowBackButton, setBackUrl, setHideMobileHeader } = usePageTitle();
+
+  useEffect(() => {
+    setHideMobileHeader(hideMobileHeader);
+    return () => {
+      setHideMobileHeader(false);
+    };
+  }, [hideMobileHeader, setHideMobileHeader]);
 
   useEffect(() => {
     const fetchWorkoutTitle = async () => {
@@ -87,7 +96,7 @@ export default function PageTitleBar({
     <div>
       {/* Tabs Section */}
       {tabs && tabs.length > 0 && activeTab && onTabChange && (
-        <div className={`max-w-7xl mx-auto mt-4 px-4 lg:px-6 ${hideMobileTabs ? 'hidden lg:block' : ''}`}>
+        <div className={`max-w-7xl mx-auto mt-2 lg:mt-4 px-4 lg:px-6 ${hideMobileTabs ? 'hidden lg:block' : ''}`}>
           <CustomTabs
             tabs={tabs}
             activeTab={activeTab}

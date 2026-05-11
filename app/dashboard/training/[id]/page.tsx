@@ -5,7 +5,16 @@ import { useEffect, useState } from "react";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Heart, ChevronDown, Plus, Minus } from "lucide-react";
+import {
+  Heart,
+  ChevronDown,
+  Plus,
+  Minus,
+  ChevronRight,
+  ArrowLeft,
+  BarChart2,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@radix-ui/react-select";
 import PageTitleBar from "../../components/page-title-bar";
@@ -76,6 +85,33 @@ export default function TrainingPage({ params }: { params: Promise<{ id: string 
   const [exerciseVideoPlaying, setExerciseVideoPlaying] = useState<
     Record<string, boolean>
   >({});
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const toggleFavorite = () => {
+    const next = !isFavorite;
+    setIsFavorite(next);
+    if (next) {
+      const muscleGroups = workout?.targetMuscleGroups;
+      const group = Array.isArray(muscleGroups) ? muscleGroups[0] : null;
+      toast.custom(
+        () => (
+          <div className="flex items-center gap-3 bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 w-[90vw] max-w-md mx-auto">
+            <Heart className="h-5 w-5 fill-red-500 text-red-500 shrink-0" />
+            <p className="text-sm text-[#101827]">
+              Treneruotę išsaugota
+              {group && (
+                <>
+                  {" į "}
+                  <span className="text-[#34786C] font-medium">{group}</span>
+                </>
+              )}
+            </p>
+          </div>
+        ),
+        { duration: 2500 }
+      );
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -352,9 +388,180 @@ export default function TrainingPage({ params }: { params: Promise<{ id: string 
 
   return (
     <>
-      <PageTitleBar workoutId={workout.id} workoutTitle={workout.name} />
+      <PageTitleBar
+        workoutId={workout.id}
+        workoutTitle={workout.name}
+        hideMobileHeader
+      />
 
-      <div className="flex-1 p-6">
+      {/* Mobile layout */}
+      <div className="lg:hidden bg-white min-h-screen pb-24">
+        <div className="relative h-[55vh] min-h-[360px] bg-black">
+          <Image
+            src={
+              workout.imageUrl || "/placeholder.svg?height=600&width=800"
+            }
+            alt={workout.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Atgal"
+            className="absolute top-4 left-4 h-9 w-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={toggleFavorite}
+            aria-label={
+              isFavorite ? "Pašalinti iš mėgstamų" : "Pridėti į mėgstamus"
+            }
+            aria-pressed={isFavorite}
+            className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full bg-white shadow-md z-10"
+          >
+            <Heart
+              className={`h-5 w-5 ${
+                isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="relative -mt-6 bg-white rounded-t-3xl px-5 pt-6">
+          <div className="flex items-center gap-5 text-sm text-[#101827] mb-5">
+            <div className="flex items-center gap-1.5">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M10.125 2C8.51803 2 6.94714 2.47652 5.611 3.36931C4.27485 4.2621 3.23344 5.53105 2.61848 7.0157C2.00352 8.50035 1.84262 10.134 2.15612 11.7101C2.46963 13.2862 3.24346 14.7339 4.37976 15.8702C5.51606 17.0065 6.9638 17.7804 8.5399 18.0939C10.116 18.4074 11.7497 18.2465 13.2343 17.6315C14.719 17.0166 15.9879 15.9752 16.8807 14.639C17.7735 13.3029 18.25 11.732 18.25 10.125C18.2477 7.97081 17.391 5.90551 15.8677 4.38227C14.3445 2.85903 12.2792 2.00227 10.125 2ZM14.5 10.75H11.6336L13.6922 12.8078C13.7503 12.8659 13.7963 12.9348 13.8277 13.0107C13.8592 13.0866 13.8754 13.1679 13.8754 13.25C13.8754 13.3321 13.8592 13.4134 13.8277 13.4893C13.7963 13.5652 13.7503 13.6341 13.6922 13.6922C13.6341 13.7503 13.5652 13.7963 13.4893 13.8277C13.4134 13.8592 13.3321 13.8753 13.25 13.8753C13.1679 13.8753 13.0866 13.8592 13.0107 13.8277C12.9348 13.7963 12.8659 13.7503 12.8078 13.6922L9.68282 10.5672C9.59531 10.4798 9.5357 10.3684 9.51155 10.2471C9.48739 10.1258 9.49977 10 9.54711 9.88576C9.59446 9.77149 9.67464 9.67384 9.77751 9.60518C9.88039 9.53651 10.0013 9.4999 10.125 9.5H14.5C14.6658 9.5 14.8247 9.56585 14.9419 9.68306C15.0592 9.80027 15.125 9.95924 15.125 10.125C15.125 10.2908 15.0592 10.4497 14.9419 10.5669C14.8247 10.6842 14.6658 10.75 14.5 10.75Z"
+                  fill="#9FA4B0"
+                />
+              </svg>
+              <span>{workout.duration || 15} min</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M10.8574 2.08594C11.6909 2.79216 12.9733 3.99893 14.0654 5.54492C15.222 7.18213 16.125 9.14098 16.125 11.25C16.125 12.8744 15.4797 14.4324 14.3311 15.5811C13.1824 16.7297 11.6244 17.375 10 17.375C8.37558 17.375 6.8176 16.7297 5.66895 15.5811C4.52032 14.4324 3.87503 12.8744 3.875 11.25C3.875 9.30913 4.62549 7.27288 6.18848 5.18848L7.97461 6.91895L8.80469 7.72363L9.20117 6.63672L10.8574 2.08594Z"
+                  fill="#9FA4B0"
+                  stroke="#9FA4B0"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span>1000 kcal</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <BarChart2 className="h-4 w-4 text-[#9FA4B0]" />
+              <span>{difficultyInfo.label}</span>
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-semibold text-[#101827] mb-3">
+            {workout.name}
+          </h1>
+
+          <p className="text-sm text-[#555B65] leading-relaxed mb-6">
+            {workout.description ||
+              "Ši treniruotė yra puikus būdas pradėti sveiką gyvenimo būdą, nes ji nereikalauja specialios įrangos, gali būti atliekama bet kur ir lengvai pritaikoma pagal individualius poreikius bei galimybes."}
+          </p>
+
+          <div className="border-t border-[#E6E6E6]">
+            <button
+              type="button"
+              onClick={() => toggleSection("benefits")}
+              className="w-full flex items-center justify-between py-4"
+            >
+              <span className="text-base font-semibold text-[#101827]">
+                Nauda
+              </span>
+              {expandedSections.benefits ? (
+                <Minus className="h-5 w-5 text-[#101827]" />
+              ) : (
+                <Plus className="h-5 w-5 text-[#101827]" />
+              )}
+            </button>
+            {expandedSections.benefits && (
+              <div className="pb-4 text-sm text-[#555B65] space-y-2">
+                <p>
+                  Treniruotė stiprina raumenis, gerina kraujotaką ir kūno
+                  toną.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-[#E6E6E6]">
+            <button
+              type="button"
+              onClick={() => toggleSection("equipment")}
+              className="w-full flex items-center justify-between py-4"
+            >
+              <span className="text-base font-semibold text-[#101827]">
+                Įranga
+              </span>
+              {expandedSections.equipment ? (
+                <Minus className="h-5 w-5 text-[#101827]" />
+              ) : (
+                <Plus className="h-5 w-5 text-[#101827]" />
+              )}
+            </button>
+            {expandedSections.equipment && (
+              <div className="pb-4 text-sm text-[#555B65] space-y-1">
+                {workout.equipment && Array.isArray(workout.equipment) && workout.equipment.length > 0 ? (
+                  workout.equipment.map((item: string, i: number) => (
+                    <p key={i}>• {item}</p>
+                  ))
+                ) : (
+                  <p>Nereikalinga papildoma įranga</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <a
+            href="#technika"
+            className="mt-3 flex items-center justify-between p-4 rounded-xl bg-[#EAF5F1] border border-[#D7EBE3] text-[#101827] text-sm font-medium hover:bg-[#DCEEE5] transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center h-5 w-5 rounded-full border border-[#101827] text-[10px]">
+                ?
+              </span>
+              Pratimų technika
+            </span>
+            <ChevronRight className="h-5 w-5" />
+          </a>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E6E6E6] p-4 pb-6 z-20">
+          <button
+            type="button"
+            onClick={toggleMainVideoPlay}
+            className="w-full bg-[#60988E] hover:bg-[#34786C] text-white font-medium py-3.5 rounded-xl transition-colors"
+          >
+            Pradėti treniruotę
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden lg:block flex-1 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="md:col-span-3">

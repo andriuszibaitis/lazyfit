@@ -4,6 +4,7 @@ import SearchInput from "../../components/search-input";
 import { Bell, Bookmark, Menu, Search } from "lucide-react";
 import BackButton from "./back-button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useMobileMenu } from "../contexts/mobile-menu-context";
 
@@ -19,6 +20,7 @@ interface DashboardHeaderProps {
   showBackButton?: boolean;
   backUrl?: string | null;
   mobileGreeting?: MobileGreeting | null;
+  hideMobileHeader?: boolean;
 }
 
 function getFormattedDate(): string {
@@ -34,16 +36,18 @@ export default function DashboardHeader({
   pageTitle,
   showBackButton = false,
   backUrl = null,
-  mobileGreeting = null
+  mobileGreeting = null,
+  hideMobileHeader = false
 }: DashboardHeaderProps) {
   const { openMenu } = useMobileMenu();
+  const router = useRouter();
 
   const firstName = mobileGreeting?.userName?.split(" ")[0] || "";
   const lastInitial = mobileGreeting?.userName?.split(" ")[1]?.[0] || "";
   const greetingName = lastInitial ? `${firstName} ${lastInitial}.` : firstName;
 
   return (
-    <header className={`px-4 lg:px-6 py-3 lg:py-4 font-outfit ${mobileGreeting ? 'bg-transparent' : showBackButton ? 'bg-[#F7F7F7]' : 'bg-[#F7F7F7] border-b border-gray-200'} lg:bg-[#F7F7F7] lg:border-b lg:border-gray-200`}>
+    <header className={`px-4 lg:px-6 py-3 lg:py-4 font-outfit ${hideMobileHeader ? 'hidden lg:block' : ''} ${mobileGreeting ? 'bg-transparent' : showBackButton ? 'bg-[#F7F7F7]' : 'bg-[#F7F7F7] border-b border-gray-200'} lg:bg-[#F7F7F7] lg:border-b lg:border-gray-200`}>
       {/* Mobile greeting header - shown only on mobile when mobileGreeting is set */}
       {mobileGreeting && (
         <div className="lg:hidden max-w-7xl mx-auto flex items-center justify-between w-full">
@@ -65,7 +69,7 @@ export default function DashboardHeader({
               <Search className="h-5 w-5 text-[#101827]" />
             </button>
             <div className="relative">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button onClick={() => router.push("/dashboard/asmenine-paskyra?tab=reports")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <Bell className="h-5 w-5 text-[#101827]" />
                 <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F7F7F7]"></div>
               </button>
@@ -98,7 +102,7 @@ export default function DashboardHeader({
               />
             </div>
             <div className="relative">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button onClick={() => router.push("/dashboard/asmenine-paskyra?tab=reports")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <Bell className="h-5 w-5 text-black" />
                 <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></div>
               </button>

@@ -42,6 +42,12 @@ export default async function DashboardPage() {
 
 
   const trainings = workouts.map((workout) => {
+    const rawGroups = workout.targetMuscleGroups;
+    const muscleGroups = Array.isArray(rawGroups)
+      ? (rawGroups as unknown[]).filter(
+          (g): g is string => typeof g === "string"
+        )
+      : [];
     return {
       id: workout.id,
       title: workout.name,
@@ -53,6 +59,7 @@ export default async function DashboardPage() {
       membershipId: workout.membershipId,
       membershipName: workout.membership?.name,
       createdAt: workout.createdAt.toISOString(),
+      muscleGroups,
     };
   });
 

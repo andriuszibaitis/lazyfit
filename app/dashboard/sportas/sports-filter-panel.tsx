@@ -148,7 +148,7 @@ export function SportsFilterPanel({
   return (
     <div className={`font-[Outfit] mb-8 ${wrapperClass}`}>
       {/* Header with Filter button, count, and Sort dropdown */}
-      <div className="relative flex items-center justify-between py-6">
+      <div className="relative hidden lg:flex items-center justify-between py-6">
         <div className="flex items-center gap-4">
           <FilterButton onClick={onToggle} badgeCount={activeFilterCount} />
           {totalCount !== undefined && (
@@ -315,31 +315,63 @@ export function SportsFilterPanel({
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 py-6 border-t border-[#E6E6E6]">
-            <button
-              onClick={clearFilters}
-              className={`text-sm transition-colors ${
-                hasActiveFilters
-                  ? "text-[#101827] hover:text-[#6B7280]"
-                  : "text-[#9FA4B0] cursor-default"
-              }`}
-              disabled={!hasActiveFilters}
-            >
-              Išvalyti filtrus
-            </button>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <button
-                onClick={onClose}
-                className="text-sm text-[#9FA4B0] hover:text-[#6B7280] transition-colors"
-              >
-                Atšaukti
-              </button>
+          <div className="py-6 border-t border-[#E6E6E6]">
+            {/* Mobile layout: primary button full width, secondary actions below */}
+            <div className="flex flex-col gap-3 lg:hidden">
               <button
                 onClick={handleApply}
-                className="bg-[#60988E] text-white text-sm font-medium px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-[#34786C] transition-colors flex-1 sm:flex-none"
+                className="w-full bg-[#60988E] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#34786C] transition-colors"
               >
                 Taikyti filtrus
               </button>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={clearFilters}
+                  className={`text-sm transition-colors ${
+                    hasActiveFilters
+                      ? "text-[#101827] hover:text-[#6B7280]"
+                      : "text-[#9FA4B0] cursor-default"
+                  }`}
+                  disabled={!hasActiveFilters}
+                >
+                  Išvalyti filtrus
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-sm text-[#9FA4B0] hover:text-[#6B7280] transition-colors"
+                >
+                  Atšaukti
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop layout: unchanged */}
+            <div className="hidden lg:flex items-center justify-between gap-4">
+              <button
+                onClick={clearFilters}
+                className={`text-sm transition-colors ${
+                  hasActiveFilters
+                    ? "text-[#101827] hover:text-[#6B7280]"
+                    : "text-[#9FA4B0] cursor-default"
+                }`}
+                disabled={!hasActiveFilters}
+              >
+                Išvalyti filtrus
+              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={onClose}
+                  className="text-sm text-[#9FA4B0] hover:text-[#6B7280] transition-colors"
+                >
+                  Atšaukti
+                </button>
+                <button
+                  onClick={handleApply}
+                  className="bg-[#60988E] text-white text-sm font-medium px-6 py-3 rounded-lg hover:bg-[#34786C] transition-colors"
+                >
+                  Taikyti filtrus
+                </button>
+              </div>
             </div>
           </div>
         </div>

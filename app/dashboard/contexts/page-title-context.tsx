@@ -16,6 +16,8 @@ interface PageTitleContextType {
   setBackUrl: (url: string | null) => void;
   mobileGreeting: MobileGreeting | null;
   setMobileGreeting: (greeting: MobileGreeting | null) => void;
+  hideMobileHeader: boolean;
+  setHideMobileHeader: (hide: boolean) => void;
 }
 
 const PageTitleContext = createContext<PageTitleContextType | undefined>(undefined);
@@ -25,9 +27,10 @@ export function PageTitleProvider({ children }: { children: ReactNode }) {
   const [showBackButton, setShowBackButton] = useState(false);
   const [backUrl, setBackUrl] = useState<string | null>(null);
   const [mobileGreeting, setMobileGreeting] = useState<MobileGreeting | null>(null);
+  const [hideMobileHeader, setHideMobileHeader] = useState(false);
 
   return (
-    <PageTitleContext.Provider value={{ pageTitle, setPageTitle, showBackButton, setShowBackButton, backUrl, setBackUrl, mobileGreeting, setMobileGreeting }}>
+    <PageTitleContext.Provider value={{ pageTitle, setPageTitle, showBackButton, setShowBackButton, backUrl, setBackUrl, mobileGreeting, setMobileGreeting, hideMobileHeader, setHideMobileHeader }}>
       {children}
     </PageTitleContext.Provider>
   );

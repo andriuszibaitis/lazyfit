@@ -2,6 +2,7 @@ import type React from "react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../lib/auth-options";
 import { redirect } from "next/navigation";
+import { Toaster } from "sonner";
 import SideNavigation from "./components/side-navigation";
 import { PageTitleProvider } from "./contexts/page-title-context";
 import { MobileMenuProvider } from "./contexts/mobile-menu-context";
@@ -32,6 +33,12 @@ export default async function DashboardLayout({
 
           <BottomNavigation />
         </div>
+        <Toaster
+          position="bottom-center"
+          offset={{ bottom: "88px" }}
+          mobileOffset={{ bottom: "88px" }}
+          visibleToasts={1}
+        />
       </MobileMenuProvider>
     </PageTitleProvider>
   );

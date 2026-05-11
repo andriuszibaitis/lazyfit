@@ -37,7 +37,7 @@ export function CustomTabs({
     }
 
     return cn(
-      "px-6 py-3 text-base font-medium transition-all duration-200 border-b-2",
+      "px-4 py-2.5 text-[13px] lg:px-6 lg:py-3 lg:text-base font-medium transition-all duration-200 border-b-2",
       fullWidth && "flex-1 text-center",
       isActive
         ? "text-black border-black"
@@ -46,7 +46,7 @@ export function CustomTabs({
   };
 
   return (
-    <div className={cn("w-full overflow-x-auto scrollbar-hide", className)}>
+    <div className={cn("w-full overflow-x-auto scrollbar-hide font-[outfit]", className)}>
       <div
         className={cn(
           variant === "pill" ? "flex gap-2" : "flex border-b border-gray-200",

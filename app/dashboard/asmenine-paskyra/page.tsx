@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut, signIn } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import PageTitleBar from "../components/page-title-bar";
 import { CustomTabs, TabItem } from "@/components/ui/custom-tabs";
 import ProfileAvatar from "../../components/profile-avatar";
@@ -15,7 +16,10 @@ import SuccessModal from "../../components/success-modal";
 
 export default function AsmeninemPaskyraPage() {
   const { data: session, status, update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState("personal");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialTab = searchParams.get("tab") || "personal";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -288,14 +292,16 @@ export default function AsmeninemPaskyraPage() {
     }
   ];
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tabId);
+    router.replace(`/dashboard/asmenine-paskyra?${params.toString()}`, { scroll: false });
 
-    // Fetch membership data when switching to members tab
     if (tabId === "members" && !membershipData) {
       fetchMembershipData();
     }
-  };
+  }, [searchParams, router, membershipData]);
 
   const handleMembershipSubTabChange = (subTabId: string) => {
     setMembershipSubTab(subTabId);
@@ -1039,56 +1045,92 @@ export default function AsmeninemPaskyraPage() {
         );
       case "reports":
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="space-y-0">
-                  {/* El. pašto įspėjimai */}
-                  <div className="flex items-start justify-between py-6">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        El. pašto įspėjimai
-                      </h3>
-                      <p className="text-gray-600">
-                        El. pašto įspėjimai apie pranešimus ar reklaminius pasiūlymus
-                      </p>
-                    </div>
-                    <div className="ml-6">
-                      <Toggle
-                        checked={userData.emailNotifications}
-                        onChange={(value) => handleNotificationChange('emailNotifications', value)}
-                        size="md"
-                        disabled={saving}
-                      />
-                    </div>
+          <>
+            {/* Mobile layout */}
+            <div className="lg:hidden font-[outfit]" style={{ animation: "fadeSlideUp 0.4s ease-out" }}>
+              <div className="bg-white -mx-4 rounded-[16px] px-4 divide-y divide-gray-200">
+                <div className="flex items-center justify-between py-4">
+                  <div className="flex-1">
+                    <span className="text-sm text-[#101827]">El. pašto įspėjimai</span>
+                    <p className="text-[13px] text-gray-500 mt-0.5">
+                      Įspėjimai apie pranešimus ar reklaminius pasiūlymus
+                    </p>
                   </div>
+                  <div className="ml-4">
+                    <Toggle
+                      checked={userData.emailNotifications}
+                      onChange={(value) => handleNotificationChange('emailNotifications', value)}
+                      size="md"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-4">
+                  <div className="flex-1">
+                    <span className="text-sm text-[#101827]">Bendri įspėjimai</span>
+                    <p className="text-[13px] text-gray-500 mt-0.5">
+                      Bendri įspėjimai apie pranešimus ar reklaminius pasiūlymus
+                    </p>
+                  </div>
+                  <div className="ml-4">
+                    <Toggle
+                      checked={userData.generalNotifications}
+                      onChange={(value) => handleNotificationChange('generalNotifications', value)}
+                      size="md"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-gray-200"></div>
-
-                  {/* Bendri įspėjimai */}
-                  <div className="flex items-start justify-between py-6">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Bendri įspėjimai
-                      </h3>
-                      <p className="text-gray-600">
-                        Bendri įspėjimai apie pranešimus ar reklaminius pasiūlymus
-                      </p>
+            {/* Desktop layout */}
+            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="space-y-0">
+                    <div className="flex items-start justify-between py-6">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          El. pašto įspėjimai
+                        </h3>
+                        <p className="text-gray-600">
+                          El. pašto įspėjimai apie pranešimus ar reklaminius pasiūlymus
+                        </p>
+                      </div>
+                      <div className="ml-6">
+                        <Toggle
+                          checked={userData.emailNotifications}
+                          onChange={(value) => handleNotificationChange('emailNotifications', value)}
+                          size="md"
+                          disabled={saving}
+                        />
+                      </div>
                     </div>
-                    <div className="ml-6">
-                      <Toggle
-                        checked={userData.generalNotifications}
-                        onChange={(value) => handleNotificationChange('generalNotifications', value)}
-                        size="md"
-                        disabled={saving}
-                      />
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex items-start justify-between py-6">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Bendri įspėjimai
+                        </h3>
+                        <p className="text-gray-600">
+                          Bendri įspėjimai apie pranešimus ar reklaminius pasiūlymus
+                        </p>
+                      </div>
+                      <div className="ml-6">
+                        <Toggle
+                          checked={userData.generalNotifications}
+                          onChange={(value) => handleNotificationChange('generalNotifications', value)}
+                          size="md"
+                          disabled={saving}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         );
       case "members":
         const membershipSubTabs: TabItem[] = [
@@ -1109,10 +1151,10 @@ export default function AsmeninemPaskyraPage() {
         const renderMembershipSubContent = () => {
           if (membershipLoading) {
             return (
-              <div className="w-full">
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="w-full font-[outfit]">
+                <div className="lg:bg-white lg:rounded-lg lg:border lg:border-gray-200 lg:p-6">
                   <div className="text-center py-8">
-                    <p className="text-gray-600">Kraunami narystės duomenys...</p>
+                    <p className="text-sm lg:text-base text-[#555B65]">Kraunami narystės duomenys...</p>
                   </div>
                 </div>
               </div>
@@ -1125,41 +1167,41 @@ export default function AsmeninemPaskyraPage() {
               const currentMembership = userMembership?.membership;
 
               return (
-                <div className="w-full">
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="space-y-8">
+                <div className="w-full font-[outfit]">
+                  <div className="lg:bg-white lg:rounded-lg lg:border lg:border-gray-200 lg:p-6">
+                      <div className="space-y-6 lg:space-y-8">
                         {/* Prenumeratos section */}
                         <div>
-                          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Prenumeratos</h2>
-                          <p className="text-gray-600 mb-6">Prekės, už kurias mokate periodiškai, pvz., „LazyFit" planas ir programos.</p>
+                          <h2 className="text-lg lg:text-2xl font-semibold text-[#101827] mb-2 lg:mb-4">Prenumeratos</h2>
+                          <p className="text-sm lg:text-base text-[#555B65] mb-4 lg:mb-6">Prekės, už kurias mokate periodiškai, pvz., „LazyFit" planas ir programos.</p>
 
                           {currentMembership ? (
-                            <div className="border border-gray-200 rounded-lg p-6">
-                              <div className="flex justify-between items-start mb-4">
+                            <div className="lg:border lg:border-gray-200 rounded-lg lg:p-6">
+                              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-4">
                                 <div>
-                                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{currentMembership.name}</h3>
-                                  <p className="text-gray-600">
+                                  <h3 className="text-base lg:text-lg font-semibold text-[#101827] mb-1 lg:mb-2">{currentMembership.name}</h3>
+                                  <p className="text-sm lg:text-base text-[#555B65]">
                                     Kaina: {Number(currentMembership.price)} €/{currentMembership.duration === 30 ? 'mėn' : currentMembership.duration + ' d.'}
                                   </p>
                                   {userMembership.membershipExpiry && (
-                                    <p className="text-gray-600">
+                                    <p className="text-sm lg:text-base text-[#555B65]">
                                       Pasibaigia {new Date(userMembership.membershipExpiry).toLocaleDateString('lt-LT')}
                                     </p>
                                   )}
-                                  <p className="text-sm text-gray-500 mt-1">
+                                  <p className="text-xs lg:text-sm text-gray-500 mt-1">
                                     Būsena: {userMembership.membershipStatus === 'active' ? 'Aktyvi' : 'Neaktyvi'}
                                   </p>
                                 </div>
-                                <div className="flex gap-3">
+                                <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 mt-3 lg:mt-0">
                                   <button
                                     onClick={() => setShowUpgradeModal(true)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
                                   >
                                     Pereiti prie 3 mėn narystės (sutaupysite 25 %)
                                   </button>
                                   <button
                                     onClick={() => setShowCancellationModal(true)}
-                                    className="px-4 py-2 text-[#60988E] hover:text-[#4a7168]"
+                                    className="px-4 py-2 text-sm text-[#60988E] hover:text-[#4a7168]"
                                   >
                                     Atsisakyti narystės
                                   </button>
@@ -1233,10 +1275,10 @@ export default function AsmeninemPaskyraPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="border border-gray-200 rounded-lg p-6">
+                            <div className="border border-gray-200 rounded-lg p-4 lg:p-6">
                               <div className="text-center">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Nemate jokių narysčių</h3>
-                                <p className="text-gray-600 mb-4">Šiuo metu neturite aktyvios narystės</p>
+                                <h3 className="text-sm lg:text-lg font-semibold text-[#101827] mb-2">Nemate jokių narysčių</h3>
+                                <p className="text-xs lg:text-base text-[#555B65] mb-4">Šiuo metu neturite aktyvios narystės</p>
                                 <button className="bg-[#60988E] text-white px-6 py-2 rounded-md hover:bg-[#4a7168] transition-colors">
                                   Peržiūrėti planus
                                 </button>
@@ -1246,13 +1288,13 @@ export default function AsmeninemPaskyraPage() {
                         </div>
 
                         {/* Atsiskaitymo ir Mokėjimo informacija sections */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Atsiskaitymo informacija</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                          <div className="border border-gray-200 rounded-lg p-4 lg:bg-white lg:p-6">
+                            <h3 className="text-sm lg:text-lg font-semibold text-[#101827] mb-3 lg:mb-4">Atsiskaitymo informacija</h3>
 
                             {!showBillingForm ? (
                               <>
-                                <p className="text-gray-600 mb-4">Pridėkite išsamią atsiskaitymo informaciją, kad sąskaitos faktūros būtų atnaujintos.</p>
+                                <p className="text-xs lg:text-base text-[#555B65] mb-4">Pridėkite išsamią atsiskaitymo informaciją, kad sąskaitos faktūros būtų atnaujintos.</p>
                                 <button
                                   onClick={() => setShowBillingForm(true)}
                                   className="bg-[#60988E] text-white px-6 py-2 rounded-md hover:bg-[#4a7168] transition-colors"
@@ -1325,12 +1367,12 @@ export default function AsmeninemPaskyraPage() {
                             )}
                           </div>
 
-                          <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Mokėjimo informacija</h3>
+                          <div className="border border-gray-200 rounded-lg p-4 lg:bg-white lg:p-6">
+                            <h3 className="text-sm lg:text-lg font-semibold text-[#101827] mb-3 lg:mb-4">Mokėjimo informacija</h3>
 
                             {!showPaymentForm ? (
                               <>
-                                <p className="text-gray-600 mb-4">Pridėkite mokėjimo metodą, kad galėtumėte įsigyti narystę.</p>
+                                <p className="text-xs lg:text-base text-[#555B65] mb-4">Pridėkite mokėjimo metodą, kad galėtumėte įsigyti narystę.</p>
                                 <button
                                   onClick={() => setShowPaymentForm(true)}
                                   className="bg-[#60988E] text-white px-6 py-2 rounded-md hover:bg-[#4a7168] transition-colors"
@@ -1449,9 +1491,9 @@ export default function AsmeninemPaskyraPage() {
               }
 
               return (
-                <div className="w-full">
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold mb-6">Sąskaitos ir mokėjimai</h3>
+                <div className="w-full font-[outfit]">
+                  <div className="lg:bg-white lg:rounded-lg lg:border lg:border-gray-200 lg:p-6">
+                    <h3 className="text-base lg:text-lg font-semibold text-[#101827] mb-4 lg:mb-6">Sąskaitos ir mokėjimai</h3>
 
                     {invoicesData.length > 0 ? (
                       <div className="space-y-4">
@@ -1589,12 +1631,12 @@ export default function AsmeninemPaskyraPage() {
               };
 
               return (
-                <div className="w-full">
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold mb-6">Visi planai</h3>
+                <div className="w-full font-[outfit]">
+                  <div className="lg:bg-white lg:rounded-lg lg:border lg:border-gray-200 lg:p-6">
+                    <h3 className="text-base lg:text-lg font-semibold text-[#101827] mb-4 lg:mb-6">Visi planai</h3>
 
                     {availableMemberships.length > 0 ? (
-                      <div className="flex justify-center items-stretch gap-6 overflow-x-auto">
+                      <div className="flex flex-col lg:flex-row lg:justify-center items-stretch gap-4 lg:gap-6 lg:overflow-x-auto">
                         {availableMemberships.map((membership: any) => {
                           const durationText = formatDuration(membership.duration);
                           const pricePerMonth = membership.price;
@@ -1606,39 +1648,39 @@ export default function AsmeninemPaskyraPage() {
                           return (
                             <div
                               key={membership.id}
-                              className={`bg-[#EFEFEF] shadow-lg rounded-xl p-6 text-[#101827] w-full max-w-sm md:max-w-md flex flex-col justify-between border-2 ${
+                              className={`bg-[#EFEFEF] shadow-sm lg:shadow-lg rounded-xl p-4 lg:p-6 text-[#101827] w-full lg:max-w-sm md:max-w-md flex flex-col justify-between border-2 ${
                                 isCurrentPlan ? 'border-[#60988E]' : 'border-transparent'
                               } transition-colors duration-300`}
                             >
-                              <div className="flex items-center justify-center mt-4">
-                                <h3 className="text-[32px] uppercase font-['mango'] flex items-center">
+                              <div className="flex items-center justify-center mt-2 lg:mt-4">
+                                <h3 className="text-[24px] lg:text-[32px] uppercase font-['mango'] flex items-center">
                                   {membership.name}
                                   {membership.discountPercentage > 0 && (
-                                    <div className="ml-4 bg-[#FFD16E] text-black rounded-full w-16 h-16 flex items-center justify-center text-sm font-bold">
+                                    <div className="ml-3 lg:ml-4 bg-[#FFD16E] text-black rounded-full w-12 h-12 lg:w-16 lg:h-16 flex items-center justify-center text-xs lg:text-sm font-bold">
                                       {membership.discountPercentage}%
                                     </div>
                                   )}
                                 </h3>
                               </div>
 
-                              <div className="mt-4 text-center h-32">
-                                <p className="text-sm font-medium">{durationText} narystė</p>
-                                <p className="mt-2 py-2 px-4 border-[1px] border-[#60988E] rounded-full inline-block text-[15px] font-semibold">
+                              <div className="mt-3 lg:mt-4 text-center lg:h-32">
+                                <p className="text-xs lg:text-sm font-medium">{durationText} narystė</p>
+                                <p className="mt-2 py-1.5 lg:py-2 px-3 lg:px-4 border-[1px] border-[#60988E] rounded-full inline-block text-[13px] lg:text-[15px] font-semibold">
                                   {formatPrice(pricePerMonth)}/mėnuo
                                 </p>
                                 {membership.discountPercentage > 0 && (
                                   <>
-                                    <p className="text-sm mt-2 line-through text-gray-500">
+                                    <p className="text-xs lg:text-sm mt-2 line-through text-gray-500">
                                       {formatPrice(totalPrice)}
                                     </p>
-                                    <p className="text-sm text-[#101827] font-semibold">
+                                    <p className="text-xs lg:text-sm text-[#101827] font-semibold">
                                       → {formatPrice(discountedTotalPrice)}
                                     </p>
                                   </>
                                 )}
                               </div>
 
-                              <ul className="mt-4 space-y-2 text-sm">
+                              <ul className="mt-3 lg:mt-4 space-y-1.5 lg:space-y-2 text-xs lg:text-sm">
                                 {featuresList.map((feature, featureIndex) => (
                                   <li key={featureIndex} className="flex items-center">
                                     <span className="text-green-600 mr-2">✔️</span>
@@ -1648,7 +1690,7 @@ export default function AsmeninemPaskyraPage() {
                               </ul>
 
                               <button
-                                className={`font-['mango'] italic text-[28px] font-bold py-2 px-4 mt-6 rounded-lg w-full transition ${
+                                className={`font-['mango'] italic text-[22px] lg:text-[28px] font-bold py-2 px-4 mt-4 lg:mt-6 rounded-lg w-full transition ${
                                   isCurrentPlan
                                     ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                                     : 'bg-[#101827] text-white hover:bg-[#EFEFEF] hover:text-[#101827]'
@@ -1663,15 +1705,15 @@ export default function AsmeninemPaskyraPage() {
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-gray-600">Nėra dostupnų planų</p>
+                        <p className="text-sm text-[#555B65]">Nėra dostupnų planų</p>
                       </div>
                     )}
 
                     {/* FAQ Section */}
-                    <div className="mt-12">
-                      <h2 className="text-[32px] uppercase font-['mango'] font-bold text-[#101827] mb-8">DUK</h2>
+                    <div className="mt-8 lg:mt-12">
+                      <h2 className="text-[24px] lg:text-[32px] uppercase font-['mango'] font-bold text-[#101827] mb-4 lg:mb-8">DUK</h2>
 
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="lg:border lg:border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-200">
                         {[
                           {
                             question: "1. Kaip veikia kalorijų skaičiuoklė?",
@@ -1694,20 +1736,20 @@ export default function AsmeninemPaskyraPage() {
                             answer: "Kalorijų skaičiuoklė yra puikus įrankis svorio kontrolei, nes padeda sekti energijos balansą. Norint numesti svorio, reikia suvartoti mažiau kalorijų nei išeikvojate."
                           }
                         ].map((faq, index) => (
-                          <div key={index} className={`${index !== 0 ? 'border-t border-gray-200' : ''}`}>
+                          <div key={index}>
                             <button
                               onClick={() => toggleFaqItem(index)}
-                              className="w-full flex justify-between items-center text-left p-6 hover:bg-gray-50 transition-colors"
+                              className="w-full flex justify-between items-center text-left px-0 lg:px-6 py-3 lg:py-6 hover:bg-gray-50 transition-colors"
                             >
-                              <h3 className="text-lg font-semibold text-[#101827] pr-4">
+                              <h3 className="text-sm lg:text-lg font-semibold text-[#101827] pr-4">
                                 {faq.question}
                               </h3>
-                              <span className="text-2xl font-bold text-[#101827] flex-shrink-0">
+                              <span className="text-xl lg:text-2xl font-bold text-[#101827] flex-shrink-0">
                                 {expandedFaqItems[index] ? '−' : '+'}
                               </span>
                             </button>
                             {expandedFaqItems[index] && (
-                              <div className="px-6 pb-6 text-gray-600 leading-relaxed">
+                              <div className="px-0 lg:px-6 pb-4 lg:pb-6 text-xs lg:text-base text-[#555B65] leading-relaxed">
                                 {faq.answer}
                               </div>
                             )}
@@ -1724,14 +1766,16 @@ export default function AsmeninemPaskyraPage() {
         };
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             <CustomTabs
               tabs={membershipSubTabs}
               activeTab={membershipSubTab}
               onTabChange={handleMembershipSubTabChange}
               variant="pill"
             />
-            {renderMembershipSubContent()}
+            <div className="bg-white -mx-4 rounded-[16px] px-4 py-4 lg:mx-0 lg:rounded-none lg:px-0 lg:py-0 lg:bg-transparent">
+              {renderMembershipSubContent()}
+            </div>
           </div>
         );
       default:
@@ -1742,11 +1786,10 @@ export default function AsmeninemPaskyraPage() {
   return (
     <div className="font-[outfit]">
       <PageTitleBar
-        title="Asmeninė informacija"
+        title={tabs.find(t => t.id === activeTab)?.label || "Asmeninė informacija"}
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        hideMobileTabs
         showBack
         backUrl="/dashboard/apzvalga"
       />

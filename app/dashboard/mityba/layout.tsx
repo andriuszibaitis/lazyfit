@@ -52,7 +52,7 @@ export default function MitybaLayout({
         activeTab={getActiveTab()}
         onTabChange={handleTabChange}
       />
-      <div className="flex-1">
+      <div className="flex-1 px-4 py-4 lg:px-6 lg:py-6">
         <div className="max-w-7xl mx-auto">{children}</div>
       </div>
     </>
